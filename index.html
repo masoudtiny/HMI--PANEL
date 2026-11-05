@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl" translate="no" class="notranslate">
+<head>
+<meta charset="UTF-8">
+<meta name="google" content="notranslate">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1b2128">
+<title>Amotek | HMI</title>
+<link rel="icon" href="images/icon-192.png">
+<link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#1b2128; --card:#252d36; --card-hover:#2d3742; --line:#37424e;
+  --text:#eef3f6; --muted:#9fb3c0; --accent:#65c8e8;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:light){
+  :root:not([data-theme="dark"]){
+    color-scheme:light;
+    --bg:#f1f4f7; --card:#ffffff; --card-hover:#e8f4fa; --line:#d3dbe2;
+    --text:#1b2128; --muted:#55687a; --accent:#0d8fb8;
+  }
+}
+:root[data-theme="light"]{color-scheme:light;--bg:#f1f4f7;--card:#fff;--card-hover:#e8f4fa;--line:#d3dbe2;--text:#1b2128;--muted:#55687a;--accent:#0d8fb8}
+:root[data-theme="dark"]{color-scheme:dark}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0;min-height:100vh;background:var(--bg);color:var(--text);
+  font-family:"Vazirmatn",Tahoma,"Segoe UI",system-ui,sans-serif;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;
+  padding:24px 18px;
+}
+.logo-box{height:84px;border-radius:12px;display:flex;align-items:center;justify-content:center;padding:10px;margin-bottom:4px}
+.logo-box img{max-height:100%;max-width:82%;width:auto;height:auto;display:block}
+.logo-box.dark{background:#1b2128}.logo-box.white{background:#fff}
+h1{margin:0;font-size:clamp(20px,4.6vw,28px);font-weight:800;text-align:center}
+.sub{margin:-12px 0 0;color:var(--muted);font-size:clamp(14px,3.4vw,16px);text-align:center}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:16px;width:min(720px,100%)}
+a.card{
+  display:flex;flex-direction:column;gap:8px;text-decoration:none;color:inherit;
+  background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 20px;
+  min-height:120px;transition:background .15s,transform .1s,border-color .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+a.card:hover,a.card:focus-visible{background:var(--card-hover);border-color:var(--accent);outline:none}
+a.card:active{transform:scale(.98)}
+.card .name{font-size:20px;font-weight:800;color:var(--accent);direction:ltr;text-align:right}
+.card .desc{font-size:15px;line-height:1.7;color:var(--muted)}
+.card .go{margin-top:auto;font-size:14px;font-weight:700}
+@media (prefers-reduced-motion:reduce){a.card{transition:none}}
+</style>
+</head>
+<body>
+<h1>راهنمای تعاملی پنل HMI</h1>
+<p class="sub">یکی از پنل‌ها را انتخاب کن</p>
+
+<main class="cards">
+  <a class="card" href="stacker-panel/">
+    <span class="logo-box dark"><img src="images/amotek-logo.png" alt="AMOTEK" width="300" height="52"></span>
+    <span class="name">Stacker Panel</span>
+    <span class="desc">راهنمای تعاملی پنل HMI استکر Amotek ST8B-2S</span>
+    <span class="go">باز کردن ←</span>
+  </a>
+  <a class="card" href="hmi-panel/">
+    <span class="logo-box white"><img src="images/ccs-logo.png" alt="Cellulose Converting Solutions" width="200" height="101"></span>
+    <span class="name">HMI Panel</span>
+    <span class="desc">راهنمای تعاملی پنل HMI</span>
+    <span class="go">باز کردن ←</span>
+  </a>
+</main>
+<script>
+/* قبلاً پنل HMI روی ریشه‌ی سایت ثبت شده بود؛ ثبت قدیمی همان ریشه پاک می‌شود (پنل‌ها با ثبت جداگانه‌ی خودشان داخل پوشه‌هایشان کار می‌کنند) */
+if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
+  var rootScope = new URL("./", location.href).href;
+  navigator.serviceWorker.getRegistrations().then(function (rs) {
+    rs.forEach(function (r) { if (r.scope === rootScope) r.unregister(); });
+  }).catch(function () {});
+}
+</script>
+</body>
+</html>
