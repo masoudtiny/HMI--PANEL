@@ -1,0 +1,27 @@
+{
+  "name": "AMOTEK-HMI",
+  "short_name": "AMOTEK-HMI",
+  "description": "راهنمای تعاملی پنل‌های HMI Amotek",
+  "lang": "fa",
+  "dir": "rtl",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#1b2128",
+  "theme_color": "#1b2128",
+  "icons": [
+    {
+      "src": "images/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

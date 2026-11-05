@@ -60,6 +60,7 @@ button.z{position:absolute;padding:0;cursor:pointer;z-index:50;font-family:inher
 
 #topbar{position:fixed;top:6px;left:6px;z-index:1500;display:flex;gap:8px;align-items:center;pointer-events:none}
 #installBtn{display:none;pointer-events:auto;padding:6px 12px;font:700 13px Vazirmatn,Tahoma,sans-serif;border:0;border-radius:8px;background:#65c8e8;color:#10202a;cursor:pointer}
+#menuBtn{display:none;pointer-events:auto;padding:6px 12px;font:700 13px Vazirmatn,Tahoma,sans-serif;border:1px solid #65c8e8;border-radius:8px;background:rgba(27,33,40,.88);color:#65c8e8;text-decoration:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
 #iosHint{display:none;position:fixed;left:8px;right:8px;bottom:8px;z-index:4000;padding:10px 12px;border-radius:10px;background:rgba(30,37,44,.96);color:#f1f5f8;border:1px solid rgba(101,200,232,.6);font:13px Vazirmatn,Tahoma,sans-serif;direction:rtl;text-align:center}
 .tap{position:fixed;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;border:3px solid #65c8e8;background:rgba(101,200,232,.35);box-shadow:0 0 12px rgba(101,200,232,.6);pointer-events:none;z-index:6000;animation:tapPulse .65s ease-out forwards}
 @keyframes tapPulse{from{transform:scale(.4);opacity:1}to{transform:scale(1.7);opacity:0}}
@@ -70,6 +71,7 @@ button.z{position:absolute;padding:0;cursor:pointer;z-index:50;font-family:inher
 <img src="images/logo.png" alt="" onerror="this.style.display='none'" style="width:70%;max-width:220px;height:auto;margin:0 auto 12px;display:block"><h1>STACKER-PANEL</h1><p>رمز عبور را وارد کنید</p>
 <input id="gatePw" type="password" autocomplete="current-password" placeholder="Password" autocapitalize="off" autocorrect="off" spellcheck="false">
 <button id="gateBtn" type="button">ورود</button><div class="err" id="gateErr"></div>
+<a href="../" style="display:block;margin-top:12px;font-size:14px;color:#9fb3c0;text-decoration:none">← بازگشت به منو</a>
 </div></div>
 <script>
 (function(){
@@ -99,7 +101,7 @@ inp.addEventListener("keydown",function(e){if(e.key==="Enter")tryIt()});
 <div id="fitWrap" style="width:100%;margin:0;padding:0;overflow:hidden;line-height:0">
 <div class="panel" id="panel"><img id="panelImage" alt="HMI Stacker"></div>
 </div>
-<div id="topbar"><button id="installBtn" type="button">نصب برنامه</button></div>
+<div id="topbar"><button id="installBtn" type="button">نصب برنامه</button><a id="menuBtn" href="../">منو</a></div>
 <div id="iosHint">برای نصب: دکمه Share را بزن و «Add to Home Screen» را انتخاب کن.</div>
 <div id="coordBox"></div>
 <div id="msg"></div>
@@ -939,5 +941,6 @@ if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
   if(/iphone|ipad|ipod/i.test(navigator.userAgent)){var h=document.getElementById("iosHint");h.style.display="block";setTimeout(function(){h.style.display="none"},9000)}
 })();
 </script>
+<script>(function(){try{var sa=matchMedia("(display-mode: standalone)").matches||matchMedia("(display-mode: fullscreen)").matches||navigator.standalone;var m=document.getElementById("menuBtn");if(sa&&m)m.style.display="inline-block";if(sa&&screen.orientation&&screen.orientation.lock)screen.orientation.lock("landscape").catch(function(){})}catch(e){}})();</script>
 </body>
 </html>

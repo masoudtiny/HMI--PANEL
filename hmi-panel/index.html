@@ -423,6 +423,7 @@ body.locked #fitWrap{display:none}
 #topbar{position:fixed;top:6px;left:6px;z-index:1500;pointer-events:none}
 body.locked #topbar,body.locked #iosHint{display:none!important}
 #installBtn{display:none;position:static;pointer-events:auto;padding:6px 12px;user-select:none;-webkit-user-select:none;font:700 13px Vazirmatn,Tahoma,Arial,sans-serif;border:0;border-radius:8px;background:#65c8e8;color:#10202a;cursor:pointer}
+#menuBtn{display:none;pointer-events:auto;padding:6px 12px;font:700 13px Vazirmatn,Tahoma,sans-serif;border:1px solid #65c8e8;border-radius:8px;background:rgba(27,33,40,.88);color:#65c8e8;text-decoration:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
 #iosHint{display:none;position:fixed;left:8px;right:8px;bottom:8px;z-index:4000;padding:10px 12px;border-radius:10px;background:rgba(30,37,44,.96);color:#f1f5f8;border:1px solid rgba(101,200,232,.6);font:13px Vazirmatn,Tahoma,Arial,sans-serif;direction:rtl;text-align:center}
 #gate{position:fixed;inset:0;z-index:9999;background:#222;display:flex;align-items:center;justify-content:center;font-family:Vazirmatn,Tahoma,Arial,sans-serif;direction:rtl}
 #gate form{background:#1e252c;border:1px solid #65c8e8;border-radius:12px;padding:22px 24px;width:min(86vw,320px);text-align:center;color:#f1f5f8}
@@ -450,7 +451,7 @@ body.locked #topbar,body.locked #iosHint{display:none!important}
 </head><body class="locked">
 <div id="gate"><form id="gateForm" autocomplete="off"><img src="logo.png" alt="" onerror="this.style.display='none'" style="display:block;width:72%;max-width:230px;height:auto;margin:0 auto 14px;background:#fff;border-radius:10px;padding:6px"><h1 style="margin:0 0 6px;font-size:24px;font-weight:800;letter-spacing:1px;color:#65c8e8;direction:ltr">HMI-PANEL</h1><p style="margin:0 0 16px;font-size:14px;color:#9fb3c0">رمز عبور را وارد کنید</p>
 <input id="gatePass" type="password" autocomplete="off" autofocus>
-<button type="submit">ورود</button><div class="err" id="gateErr"></div></form></div>
+<button type="submit">ورود</button><div class="err" id="gateErr"></div><a href="../" style="display:block;margin-top:12px;font-size:14px;color:#9fb3c0;text-decoration:none">← بازگشت به منو</a></form></div>
 <script>
 /* رمز عبور (مشترک بین هر سه پنل): هش SHA-256 از ("amotek-hmi|" + رمز با حروف کوچک). برای عوض کردن رمز، هش جدید را در هر سه پنل بگذارید (دستورش در README.md) */
 const PASS_HASH = "a36f6602d59ac7924a648d2adc4d016de939717085e995db062db6f6be1119b5";
@@ -500,7 +501,7 @@ var _gf=document.getElementById("gateForm");if(_gf)_gf.addEventListener("submit"
     }
 });
 </script>
-<div id="topbar"><div id="installBtn" role="button" tabindex="0">نصب برنامه</div></div>
+<div id="topbar"><div id="installBtn" role="button" tabindex="0">نصب برنامه</div><a id="menuBtn" href="../">منو</a></div>
 <div id="iosHint">برای نصب: دکمه Share را بزن و «Add to Home Screen» را انتخاب کن.</div>
 <div id="fitWrap" style="width:100%;overflow:hidden">
 <div class="panel">
@@ -3877,5 +3878,6 @@ document.addEventListener("pointerdown", function (e) {
   if(/iphone|ipad|ipod/i.test(navigator.userAgent))msg("برای نصب: دکمه Share را بزن و «Add to Home Screen» را انتخاب کن.");
 })();
 </script>
+<script>(function(){try{var sa=matchMedia("(display-mode: standalone)").matches||matchMedia("(display-mode: fullscreen)").matches||navigator.standalone;var m=document.getElementById("menuBtn");if(sa&&m)m.style.display="inline-block";if(sa&&screen.orientation&&screen.orientation.lock)screen.orientation.lock("landscape").catch(function(){})}catch(e){}})();</script>
 </body>
 </html>

@@ -9,6 +9,8 @@ Interactive help pages for HMI panels. Open the root page for the menu.
 | `/hmi-panel/` | HMI Panel |
 | `/bager-panel/` | Bager Panel (Amotek) |
 
+The menu itself is the installable app (`manifest.json` + `sw.js` in the root): install it once, then pick a panel and enter the password. Installed apps open in landscape.
+
 Each project is self-contained (own `index.html`, `images/`, `manifest.json`, `sw.js`), so their code never conflicts.
 
 ## Password

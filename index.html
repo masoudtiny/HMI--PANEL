@@ -8,6 +8,10 @@
 <title>Amotek | HMI</title>
 <link rel="icon" href="images/icon-192.png">
 <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AMOTEK-HMI">
 <style>
 :root{
   color-scheme:dark;
@@ -36,8 +40,8 @@ body{
 .logo-box{height:84px;border-radius:12px;display:flex;align-items:center;justify-content:center;padding:10px;margin-bottom:4px}
 .logo-box img{max-height:100%;max-width:82%;width:auto;height:auto;display:block}
 .logo-box.dark{background:#1b2128}.logo-box.white{background:#fff}
-.logo-box.lockup{gap:12px;direction:ltr}.logo-box.lockup img{max-width:58%}
-.logo-box .tag{font-weight:800;font-size:clamp(18px,4.4vw,26px);letter-spacing:3px;color:#eb374b;line-height:1}
+.logo-box.lockup{gap:8px;direction:ltr;container-type:inline-size}.logo-box.lockup img{width:54%;max-width:54%;min-width:0;flex:0 1 auto}
+.logo-box .tag{flex:0 0 auto;font-weight:800;font-size:clamp(12px,2.2vw,22px);font-size:clamp(12px,8.5cqw,26px);letter-spacing:.12em;color:#eb374b;line-height:1}
 h1{margin:0;font-size:clamp(20px,4.6vw,28px);font-weight:800;text-align:center}
 .sub{margin:-12px 0 0;color:var(--muted);font-size:clamp(14px,3.4vw,16px);text-align:center}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:16px;width:min(1000px,100%)}
@@ -53,9 +57,15 @@ a.card:active{transform:scale(.98)}
 .card .desc{font-size:15px;line-height:1.7;color:var(--muted)}
 .card .go{margin-top:auto;font-size:14px;font-weight:700}
 @media (prefers-reduced-motion:reduce){a.card{transition:none}}
+#topbar{position:fixed;top:6px;left:6px;z-index:1500;display:flex;gap:8px;align-items:center;pointer-events:none}
+#installBtn{display:none;pointer-events:auto;padding:6px 12px;font:700 13px Vazirmatn,Tahoma,sans-serif;border:0;border-radius:8px;background:#65c8e8;color:#10202a;cursor:pointer}
+#iosHint{display:none;position:fixed;left:8px;right:8px;bottom:8px;z-index:4000;padding:10px 12px;border-radius:10px;background:rgba(30,37,44,.96);color:#f1f5f8;border:1px solid rgba(101,200,232,.6);font:13px Vazirmatn,Tahoma,sans-serif;direction:rtl;text-align:center}
+@media (max-height:520px){body{padding:12px 14px;gap:12px}.sub{margin:-6px 0 0}.logo-box{height:56px;margin-bottom:0;padding:6px}a.card{min-height:0;padding:14px 16px;gap:6px}.card .desc{font-size:13px;line-height:1.5}h1{font-size:20px}}
 </style>
 </head>
 <body>
+<div id="topbar"><button id="installBtn" type="button">نصب برنامه</button></div>
+<div id="iosHint"></div>
 <h1>راهنمای تعاملی پنل HMI</h1>
 <p class="sub">یکی از پنل‌ها را انتخاب کن</p>
 
@@ -80,13 +90,37 @@ a.card:active{transform:scale(.98)}
   </a>
 </main>
 <script>
-/* قبلاً پنل HMI روی ریشه‌ی سایت ثبت شده بود؛ ثبت قدیمی همان ریشه پاک می‌شود (پنل‌ها با ثبت جداگانه‌ی خودشان داخل پوشه‌هایشان کار می‌کنند) */
-if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
-  var rootScope = new URL("./", location.href).href;
-  navigator.serviceWorker.getRegistrations().then(function (rs) {
-    rs.forEach(function (r) { if (r.scope === rootScope) r.unregister(); });
-  }).catch(function () {});
-}
+(function () {
+  var standalone = matchMedia("(display-mode: standalone)").matches || matchMedia("(display-mode: fullscreen)").matches || navigator.standalone;
+  /* برنامه‌ی نصب‌شده خودکار افقی می‌شود */
+  try { if (standalone && screen.orientation && screen.orientation.lock) screen.orientation.lock("landscape").catch(function () {}); } catch (e) {}
+
+  /* سرویس‌ورکر منو (پنل‌ها داخل پوشه‌ی خودشان ثبت جدا دارند). ثبتِ قدیمیِ ریشه با فایل دیگر پاک می‌شود */
+  if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
+    var rootScope = new URL("./", location.href).href, swUrl = new URL("sw.js", location.href).href;
+    navigator.serviceWorker.getRegistrations().then(function (rs) {
+      return Promise.all(rs.map(function (r) {
+        var a = r.active || r.waiting || r.installing;
+        if (r.scope === rootScope && a && a.scriptURL !== swUrl) return r.unregister();
+      }));
+    }).catch(function () {}).then(function () { return navigator.serviceWorker.register("sw.js"); }).catch(function () {});
+  }
+
+  /* دکمه‌ی نصب برنامه */
+  var ib = document.getElementById("installBtn"), h = document.getElementById("iosHint"), ht = null, dp = null;
+  if (standalone) return;
+  function show() { ib.style.display = "inline-block"; }
+  function msg(t) { h.textContent = t; h.style.display = "block"; clearTimeout(ht); ht = setTimeout(function () { h.style.display = "none"; }, 9000); }
+  var ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); dp = e; show(); });
+  addEventListener("appinstalled", function () { ib.style.display = "none"; });
+  setTimeout(show, 2500);   /* اگر مرورگر پیام نصب نفرستاد، دکمه باز هم دیده می‌شود و راهنما می‌دهد */
+  ib.addEventListener("click", function () {
+    if (dp) { dp.prompt(); dp = null; ib.style.display = "none"; return; }
+    msg(ios ? "برای نصب: دکمه Share را بزن و «Add to Home Screen» را انتخاب کن." : "از منوی ⋮ بالای مرورگر Chrome گزینه «Install app» یا «Add to Home screen» را بزن.");
+  });
+  if (ios) msg("برای نصب: دکمه Share را بزن و «Add to Home Screen» را انتخاب کن.");
+})();
 </script>
 </body>
 </html>
