@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="fa" translate="no" class="notranslate">
+<head>
+<meta charset="UTF-8">
+<meta name="google" content="notranslate">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1b2128">
+<script>
+/* قفل رمز: هش SHA-256 از ("amotek-hmi|" + رمز با حروف کوچک)، همان رمز مشترک هر سه پنل. فقط روی github.io (یا با ?lock) فعال است. */
+var BP_SALT="amotek-hmi|", BP_HASH="a36f6602d59ac7924a648d2adc4d016de939717085e995db062db6f6be1119b5";
+var BP_NEEDS_PW=/(^|\.)github\.io$/i.test(location.hostname)||/[?&]lock\b/.test(location.search);
+(function(){if(!BP_NEEDS_PW)return;try{if(!/[?&]lock\b/.test(location.search)&&sessionStorage.getItem("bp_ok2")===BP_HASH)return}catch(e){}document.documentElement.className+=" locked"})();
+</script>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="HMI-BAGER">
+<title>HMI-BAGER</title>
+<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+.lockup{display:flex;align-items:center;justify-content:center;gap:12px;direction:ltr;margin:0 auto 12px}.lockup img{height:38px;width:auto;display:block}.lockup span{font-weight:800;font-size:26px;letter-spacing:3px;color:#eb374b;line-height:1}
+html.locked body>*:not(#gate){display:none!important}
+#gate{display:none;position:fixed;inset:0;z-index:99999;background:#1b2128;align-items:center;justify-content:center;font-family:Vazirmatn,Tahoma,Arial,sans-serif;direction:rtl}
+html.locked #gate{display:flex}
+#gate .box{width:min(88vw,340px);padding:26px 22px;border-radius:16px;background:#242c35;border:1px solid rgba(101,200,232,.5);box-shadow:0 10px 40px rgba(0,0,0,.6);text-align:center;color:#e8eef3}
+#gate h1{margin:0 0 6px;font-size:24px;font-weight:800;letter-spacing:1px;color:#65c8e8;direction:ltr}
+#gate p{margin:0 0 16px;font-size:14px;color:#9fb3c0}
+#gate input{width:100%;box-sizing:border-box;padding:12px;font-size:18px;text-align:center;border-radius:10px;border:1px solid #4a5866;background:#151a20;color:#fff;direction:ltr;outline:none}
+#gate input:focus{border-color:#65c8e8}
+#gate button{margin-top:12px;width:100%;padding:12px;font-size:17px;font-weight:700;border:0;border-radius:10px;background:#65c8e8;color:#10202a;cursor:pointer}
+#gate .err{min-height:20px;margin-top:10px;font-size:14px;color:#ff7b7b}
+</style>
+<style>
+html{margin:0;padding:0;-webkit-text-size-adjust:100%;text-size-adjust:100%}body{margin:0;padding:0;background:#222;overflow-x:hidden;font-family:Vazirmatn,Tahoma,Arial,sans-serif}
+.panel{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;position:relative;display:block;width:1000px;margin:0;padding:0;transform-origin:0 0;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.panel img{width:1000px;display:block}
+button.z{position:absolute;padding:0;cursor:pointer;z-index:50;font-family:inherit;box-sizing:border-box;background:transparent!important;border:none!important;color:transparent!important;font-size:0!important;box-shadow:none!important;outline:none!important}
+.debug-on button.z{background:rgba(255,220,0,.30)!important;border:1px solid #ffdc00!important}
+.debug-on button.z.go{background:rgba(40,120,255,.35)!important;border-color:#2878ff!important}
+.pick button.z{pointer-events:none}
+.panel.labels-on img{filter:blur(2.5px) brightness(1.2) opacity(.2);transition:filter .15s}
+.hmi-label{white-space:pre-line;position:absolute;box-sizing:border-box;display:flex;align-items:center;justify-content:center;text-align:center;direction:rtl;overflow:hidden;padding:1px 3px;background:none;border:0;color:#fff;-webkit-text-stroke:3px #000;paint-order:stroke fill;text-shadow:0 0 3px #000,0 0 3px #000,1px 1px 2px #000,-1px -1px 2px #000;font-family:Vazirmatn,Tahoma,Arial,sans-serif;font-weight:700;line-height:1.2;z-index:300;pointer-events:none}
+.pick .hmi-label{display:none}
+#liveClock{position:absolute;z-index:40;pointer-events:none;box-sizing:border-box;display:flex;align-items:center;justify-content:center;white-space:nowrap;font-family:Consolas,Menlo,monospace;font-weight:600;letter-spacing:.5px;direction:ltr}
+.panel.labels-on #liveClock{filter:blur(2.5px) brightness(1.2) opacity(.2);transition:filter .15s}
+#coordBox{display:none;position:fixed;top:6px;right:6px;z-index:5000;background:#000;color:#3f3;font:14px monospace;padding:6px 10px;border:1px solid #3f3;border-radius:6px;pointer-events:none;max-width:90vw;direction:ltr;white-space:pre-wrap}
+#msg{display:none;position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:3000;background:rgba(30,37,44,.95);color:#f1f5f8;border:1px solid rgba(101,200,232,.6);border-radius:10px;padding:8px 14px;font-size:13px;max-width:90vw;direction:rtl;text-align:center}
+.hmi-tooltip{position:fixed;display:none;width:250px;max-width:calc(100vw - 10px);box-sizing:border-box;padding:10px 14px;background:rgba(30,37,44,.88);color:#f1f5f8;border:1px solid rgba(101,200,232,.6);border-radius:12px;direction:rtl;text-align:right;font-family:Vazirmatn,Tahoma,Arial,sans-serif;font-size:17px;line-height:1.6;box-shadow:0 10px 30px rgba(0,0,0,.6),0 0 15px rgba(101,200,232,.15);z-index:2000;pointer-events:none;white-space:pre-line;backdrop-filter:blur(8px)}
+.hmi-tooltip.wide{width:390px}
+.hmi-tooltip-title{display:block;color:#65c8e8;font-weight:800;font-size:18px;margin-bottom:6px;padding-bottom:5px;border-bottom:1px solid rgba(101,200,232,.3);direction:ltr;text-align:left;overflow-wrap:anywhere;letter-spacing:.5px}
+.hmi-tooltip-text{display:block;color:#e8eef3;font-size:16px;font-weight:600;line-height:1.7;overflow-wrap:anywhere}
+.hmi-tooltip-hint{display:block;margin-top:6px;color:#9fb3c0;font-size:13px}
+@media (max-width:600px){.hmi-tooltip{width:170px;padding:6px 9px;font-size:11.5px;line-height:1.45;border-radius:9px}.hmi-tooltip.wide{width:260px}.hmi-tooltip-title{font-size:12.5px;margin-bottom:3px;padding-bottom:3px}.hmi-tooltip-text{font-size:11.5px;line-height:1.5;font-weight:500}.hmi-tooltip-hint{font-size:10px}}
+
+#topbar{position:fixed;top:6px;left:6px;z-index:1500;display:flex;gap:8px;align-items:center;pointer-events:none}
+#installBtn{display:none;pointer-events:auto;padding:6px 12px;font:700 13px Vazirmatn,Tahoma,sans-serif;border:0;border-radius:8px;background:#65c8e8;color:#10202a;cursor:pointer}
+#iosHint{display:none;position:fixed;left:8px;right:8px;bottom:8px;z-index:4000;padding:10px 12px;border-radius:10px;background:rgba(30,37,44,.96);color:#f1f5f8;border:1px solid rgba(101,200,232,.6);font:13px Vazirmatn,Tahoma,sans-serif;direction:rtl;text-align:center}
+.tap{position:fixed;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;border:3px solid #65c8e8;background:rgba(101,200,232,.35);box-shadow:0 0 12px rgba(101,200,232,.6);pointer-events:none;z-index:6000;animation:tapPulse .65s ease-out forwards}
+@keyframes tapPulse{from{transform:scale(.4);opacity:1}to{transform:scale(1.7);opacity:0}}
+</style>
+</head>
+<body>
+<div id="gate"><div class="box">
+<div class="lockup"><img src="logo.png" alt="AMOTEK" onerror="this.style.display='none'"><span>BAGER</span></div><h1>BAGER-PANEL</h1><p>رمز عبور را وارد کنید</p>
+<input id="gatePw" type="password" autocomplete="current-password" placeholder="Password" autocapitalize="off" autocorrect="off" spellcheck="false">
+<button id="gateBtn" type="button">ورود</button><div class="err" id="gateErr"></div>
+</div></div>
+<script>
+(function(){
+function sha256js(m){function r(n,x){return(x>>>n)|(x<<(32-n))}
+var K=[],H=[],i,j,p=0,c={};for(var n=2;p<64;n++){if(!c[n]){for(i=n*n;i<313;i+=n)c[i]=1;K[p]=(Math.pow(n,1/3)*4294967296)|0;H[p++]=(Math.pow(n,.5)*4294967296)|0}}
+H=H.slice(0,8);var b=[],l=m.length*8;for(i=0;i<(((l+64)>>9)<<4)+16;i++)b[i]=0;for(i=0;i<m.length;i++)b[i>>2]|=m[i]<<(24-(i%4)*8);
+b[l>>5]|=0x80<<(24-l%32);b[(((l+64)>>9)<<4)+15]=l;
+for(i=0;i<b.length;i+=16){var w=b.slice(i,i+16),a=H.slice(0);
+for(j=16;j<64;j++){var s0=r(7,w[j-15])^r(18,w[j-15])^(w[j-15]>>>3),s1=r(17,w[j-2])^r(19,w[j-2])^(w[j-2]>>>10);w[j]=(w[j-16]+s0+w[j-7]+s1)|0}
+for(j=0;j<64;j++){var S1=r(6,a[4])^r(11,a[4])^r(25,a[4]),ch=(a[4]&a[5])^(~a[4]&a[6]),t1=(a[7]+S1+ch+K[j]+w[j])|0,S0=r(2,a[0])^r(13,a[0])^r(22,a[0]),mj=(a[0]&a[1])^(a[0]&a[2])^(a[1]&a[2]),t2=(S0+mj)|0;
+a=[(t1+t2)|0,a[0],a[1],a[2],(a[3]+t1)|0,a[4],a[5],a[6]]}
+for(j=0;j<8;j++)H[j]=(H[j]+a[j])|0}
+return H.map(function(x){return("00000000"+(x>>>0).toString(16)).slice(-8)}).join("")}
+function utf8(s){return Array.prototype.slice.call(unescape(encodeURIComponent(s))).map(function(c){return c.charCodeAt(0)})}
+function hash(pw){var bytes=utf8(BP_SALT+pw);
+if(window.crypto&&crypto.subtle&&window.TextEncoder){return crypto.subtle.digest("SHA-256",new Uint8Array(bytes)).then(function(d){return Array.prototype.map.call(new Uint8Array(d),function(x){return("0"+x.toString(16)).slice(-2)}).join("")})}
+return Promise.resolve(sha256js(bytes))}
+var inp=document.getElementById("gatePw"),err=document.getElementById("gateErr"),busy=false;
+function tryIt(){if(busy)return;busy=true;err.textContent="";
+hash(inp.value.trim().toLowerCase()).then(function(h){
+if(h===BP_HASH){try{sessionStorage.setItem("bp_ok2",h)}catch(e){}document.documentElement.classList.remove("locked");inp.value="";window.dispatchEvent(new Event("resize"));busy=false}
+else{setTimeout(function(){err.textContent="رمز اشتباه است";inp.select();busy=false},800)}})}
+document.getElementById("gateBtn").addEventListener("click",tryIt);
+inp.addEventListener("keydown",function(e){if(e.key==="Enter")tryIt()});
+})();
+</script>
+<div id="fitWrap" style="width:100%;margin:0;padding:0;overflow:hidden;line-height:0">
+<div class="panel" id="panel"><img id="panelImage" alt="HMI Packaging"></div>
+</div>
+<div id="topbar"><button id="installBtn" type="button">نصب برنامه</button></div>
+<div id="iosHint">برای نصب: دکمه Share را بزن و «Add to Home Screen» را انتخاب کن.</div>
+<div id="coordBox"></div>
+<div id="msg"></div>
+<div id="hmiTooltip" class="hmi-tooltip"><span id="ttTitle" class="hmi-tooltip-title"></span><span id="ttText" class="hmi-tooltip-text"></span><span id="ttHint" class="hmi-tooltip-hint"></span></div>
+
+<script>
+/* حالت‌ها: آدرس را با ?debug باز کن تا دکمه‌ها و مختصات دیده شوند (آبی = دکمه‌ای که به صفحه دیگر می‌رود).
+   با ?pick دو گوشه یک قسمت را کلیک کن تا خط آماده‌ی دکمه کپی شود. */
+const SHOW_BUTTONS = /[?&](debug|pick)\b/.test(location.search), PICK = /[?&]pick\b/.test(location.search);
+
+/* ===== صفحه‌ها =====
+   هر دکمه: [x, y, عرض, ارتفاع, "اسم انگلیسی", "توضیح فارسی", "صفحه مقصد"]
+   مختصات روی عکس ۱۰۰۰ پیکسلی است (همان که با ?debug می‌بینی).
+   مقصد: کلید یک صفحه (مثل "belts")، یا "$back" برای برگشت. اگر مقصد نباشد فقط توضیح نشان می‌دهد. */
+const PAGES = {
+  "layout": { title: "Layout", image: "images/LAYOUT", buttons: [
+    [249, 5, 496, 78, "AMOTEK", "لوگو و نام سازنده دستگاه (AMOTEK)."],
+    [162, 85, 416, 34, "PB181 BG \"A\" s.n. 134700", "مدل دستگاه بسته‌بندی (PB181 بگر A) و شماره سریال (134700)."],
+    [628, 85, 151, 35, "Clock", "ساعت دستگاه."],
+    [0, 117, 481, 35, "WORKING SIZE", "سایز در حال کار: سایزی که الان روی دستگاه فعال است."],
+    [827, 5, 165, 151, "QR code", "کد QR دستگاه."],
+    [0, 152, 192, 49, "Log In", "ورود (Login): برای وارد شدن به پنل و باز شدن سطح دسترسی بالاتر.", "login"],
+    [405, 156, 189, 49, "System", "سیستم: اطلاعات و وضعیت سیستم دستگاه.", "info-system"],
+    [803, 158, 190, 46, "Menu >>", "منو: رفتن به منوی اصلی پنل (تنظیمات و عملیات دستی).", "main-menu"],
+    [67, 204, 859, 299, "Packaging schematic", "شماتیک بسته‌بندی: نمای کلی دستگاه بسته‌بندی."],
+    [0, 509, 136, 34, "Level", "سطح دسترسی (Level): ۰ یعنی هنوز وارد نشده‌ای. با Login سطح بالاتر می‌شود."],
+    [161, 491, 44, 51, "Lock", "قفل: تا وقتی وارد نشده‌ای (Login)، پنل فقط نمایش می‌دهد و مقدارها را نمی‌شود تغییر داد."],
+    [314, 509, 92, 34, "User", "کاربر: نام کاربری که وارد شده است."],
+    [602, 509, 377, 36, "Machine speed", "سرعت دستگاه (Machine speed): سرعت فعلی ماشین."],
+    [29, 547, 943, 150, "Active alarms", "لیست آلارم‌های فعال: هر ردیف شماره و متن یک آلارم است تا علت آلارم‌ها برطرف نشود معمولاً دستگاه استارت نمی‌شود."],
+    [0, 698, 195, 51, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 698, 109, 51, "Home button", "دکمه خانه (دایره): برگشت به صفحه اصلی (لایوت).", "layout"],
+    [878, 698, 122, 51, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+};
+
+/* ===== عکس‌های پوشه images/layout (قسمت‌هایی که کلیک می‌کنی و به عکس دیگر می‌رود) =====
+   مثال (حذف یا عوض کن):
+   "belt-motor": { title: "Twist belt", image: "images/layout/TWIST BELT",
+     buttons: [ [120, 80, 200, 150, "Motor", "موتور تسمه استکر", "$back"] ] },
+   برای وصل‌کردن به لایوت، مقصد یکی از دکمه‌های صفحه "layout" را اسم همین صفحه ("belt-motor") بگذار. */
+const EXTRA = {
+  "main-menu": { title: "Main menu", image: "images/MAIN MENU", buttons: [
+    [0, 9, 318, 127, "Size selection", "انتخاب سایز: انتخاب سایز کاری دستگاه.", "size-selection"],
+    [324, 9, 330, 127, "Home", "هوم: بردن سروموتورها به موقعیت مرجع.", "home-servo"],
+    [661, 9, 334, 127, "Alarm ON", "آلارم‌های فعال: لیست آلارم‌هایی که همین الان فعال‌اند.", "alarm-on"],
+    [0, 147, 318, 125, "General data", "اطلاعات عمومی: جریان سروو قسمت‌های دستگاه.", "general-data"],
+    [324, 147, 330, 125, "Operating mode", "حالت کار دستگاه (شبیه‌سازی، تخلیه محصول و ...).", "operating-mode"],
+    [659, 147, 329, 125, "Password", "رمز: ورود کاربر (Login) برای باز شدن سطح دسترسی بالاتر.", "login"],
+    [0, 286, 324, 122, "Manual operations", "عملیات دستی: حرکت دستی قسمت‌های دستگاه.", "manual-operations-1"],
+    [329, 286, 321, 122, "Valve control", "کنترل شیرها: روشن و خاموش دستی شیرهای باد.", "valve-control-1"],
+    [655, 286, 324, 122, "Language", "انتخاب زبان پنل.", "language"],
+    [4, 420, 321, 119, "Info system", "اطلاعات سیستم: شمای دستگاه و وضعیت درایوها.", "info-system"],
+    [331, 420, 316, 119, "Size data", "داده‌های سایز: رفتن مستقیم به پارامترهای عمومی (با فلش‌های بالا بقیه‌ی صفحه‌ها).", "size-data-general-parameters"],
+    [653, 418, 320, 117, "Jog", "جاگ: حرکت دستی سروموتورها.", "jog"],
+    [9, 551, 320, 116, "Product. data", "اطلاعات تولید: تعداد سیکل، ساعت کار و تعداد بسته‌ها.", "product-data"],
+    [334, 551, 313, 114, "Empty", "خانه‌ی خالی؛ کاربردی ندارد."],
+    [651, 551, 316, 111, "Rotopusher profiles", "پروفایل‌های روتوپوشر.", "pre-compression-rotopusher-profile"],
+    [0, 677, 185, 62, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [408, 677, 167, 62, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [791, 677, 179, 62, "Square button", "دکمه مربع: منوی اصلی (همین صفحه)."],
+  ]},
+  "settings-menu": { title: "Settings menu", image: "images/SETTINGS MENU", buttons: [
+    [12, 12, 461, 50, "SETTINGS", "سرتیتر «تنظیمات»: گزینه‌های زیرش (انتخاب سایز تا پروفایل روتوپوشر) تنظیمات دستگاه‌اند."],
+    [12, 66, 461, 50, "Size selection", "انتخاب سایز: انتخاب سایز کاری و ارسال آن به PLC.", "size-selection"],
+    [12, 117, 461, 50, "General data", "اطلاعات عمومی: جریان سروموتورهای قسمت‌های مختلف دستگاه.", "general-data"],
+    [12, 169, 461, 50, "Operating mode", "حالت‌های کار دستگاه: شبیه‌سازی، بارگیری، تخلیه، گرم‌شدن سیلرها و ...", "operating-mode"],
+    [12, 221, 461, 50, "Info system", "اطلاعات سیستم: شمای دستگاه، پیغام خطای درایوها و نقطه‌ی توقف.", "info-system"],
+    [12, 272, 461, 50, "Size data", "داده‌های سایز: پارامترهای هر سایز (طول محصول، بازشدن کیسه، سیلینگ، چرخش و ...).", "size-data-menu"],
+    [12, 324, 461, 50, "Rotopusher profiles", "پروفایل روتوپوشر: نقطه‌های مسیر حرکت روتوپوشر پیش‌فشردن.", "pre-compression-rotopusher-profile"],
+    [12, 377, 461, 52, "MANUAL FUNCTIONS", "سرتیتر «عملکردهای دستی»: Home و Jog و (با فلش پایین) بقیه‌ی عملیات دستی."],
+    [12, 432, 461, 50, "Home", "هوم: بردن سروموتورها به موقعیت مرجع (هوم) و دیدن وضعیت آن.", "home-servo"],
+    [12, 484, 461, 50, "Jog", "جاگ: حرکت دستی دستگاه با تنظیم زاویه‌ی مستر و سرعت جاگ.", "jog"],
+    [12, 537, 461, 53, "Scroll arrows", "فلش پایین: بقیه‌ی منو (Manual functions).", "manual-functions-menu"],
+    [0, 690, 150, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "home-servo": { title: "Home", image: "images/HOME", buttons: [
+    [12, 12, 461, 50, "SETTINGS", "سرتیتر «تنظیمات»: گزینه‌های زیرش (انتخاب سایز تا پروفایل روتوپوشر) تنظیمات دستگاه‌اند."],
+    [12, 66, 461, 50, "Size selection", "انتخاب سایز: انتخاب سایز کاری و ارسال آن به PLC.", "size-selection"],
+    [12, 117, 461, 50, "General data", "اطلاعات عمومی: جریان سروموتورهای قسمت‌های مختلف دستگاه.", "general-data"],
+    [12, 169, 461, 50, "Operating mode", "حالت‌های کار دستگاه: شبیه‌سازی، بارگیری، تخلیه، گرم‌شدن سیلرها و ...", "operating-mode"],
+    [12, 221, 461, 50, "Info system", "اطلاعات سیستم: شمای دستگاه، پیغام خطای درایوها و نقطه‌ی توقف.", "info-system"],
+    [12, 272, 461, 50, "Size data", "داده‌های سایز: پارامترهای هر سایز (طول محصول، بازشدن کیسه، سیلینگ، چرخش و ...).", "size-data-menu"],
+    [12, 324, 461, 50, "Rotopusher profiles", "پروفایل روتوپوشر: نقطه‌های مسیر حرکت روتوپوشر پیش‌فشردن.", "pre-compression-rotopusher-profile"],
+    [12, 377, 461, 52, "MANUAL FUNCTIONS", "سرتیتر «عملکردهای دستی»: Home و Jog و (با فلش پایین) بقیه‌ی عملیات دستی."],
+    [12, 432, 461, 50, "Home", "هوم: بردن سروموتورها به موقعیت مرجع (هوم) و دیدن وضعیت آن.", "$back"],
+    [12, 484, 461, 50, "Jog", "جاگ: حرکت دستی دستگاه با تنظیم زاویه‌ی مستر و سرعت جاگ.", "jog"],
+    [12, 537, 461, 53, "Scroll arrows", "فلش پایین: بقیه‌ی منو (Manual functions).", "manual-functions-menu"],
+    [563, 132, 345, 298, "SERVOMOTORS HOME", "وضعیت هوم سروموتورها."],
+    [563, 438, 345, 83, "HOME OK", "هوم انجام شد."],
+    [570, 536, 335, 80, "OHC HOME POSITION OK", "هوم OHC درست است."],
+    [0, 690, 150, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "manual-functions-menu": { title: "Manual Functions Menu", image: "images/MANUAL FUNCTIONS MENU", buttons: [
+    [13, 70, 459, 51, "MANUAL FUNCTIONS", "سرتیتر «عملکردهای دستی»: شامل Manual operations و Valve control."],
+    [13, 226, 459, 49, "SETTINGS", "سرتیتر «تنظیمات»: شامل Alarm ON."],
+    [13, 334, 459, 49, "DATA COLLECTIONS", "سرتیتر «جمع‌آوری داده‌ها»: شامل Product data."],
+    [13, 440, 459, 50, "DISPLAY", "سرتیتر «نمایش»: شامل I/O check، Panel function و Language."],
+    [13, 12, 460, 60, "Menu up arrow", "فلش بالای منو: برگشت به منوی تنظیمات (Settings).", "settings-menu"],
+    [14, 121, 459, 50, "Manual operations", "عملیات دستی: حرکت و تست دستی قسمت‌ها (ترمز بازوها، هم‌ترازی سیلرها، تغذیه‌کننده‌ی کیسه، تست لامپ، ریست شیر اصلی).", "manual-operations-1"],
+    [14, 173, 459, 50, "Valve control", "کنترل شیرها: روشن و خاموش کردن دستی شیرهای باد دستگاه.", "valve-control-1"],
+    [14, 277, 459, 50, "Alarm ON", "آلارم‌های فعال: لیست آلارم‌هایی که همین الان فعال‌اند (با فلش، تاریخچه‌ی آلارم‌ها).", "alarm-on"],
+    [14, 384, 459, 50, "Product data", "اطلاعات تولید: تعداد سیکل، ساعت کار، تعداد بسته‌ها و سرعت بگر.", "product-data"],
+    [14, 491, 459, 50, "I/O check", "بررسی ورودی/خروجی‌ها: وضعیت لحظه‌ای ورودی و خروجی‌های تابلو (قرمز = فعال، آبی = غیرفعال).", "io-check-input-cc41"],
+    [14, 544, 459, 50, "Panel function", "عملکردهای پنل: پشتیبان‌گیری و بازگردانی اطلاعات، ورود کاربر و تنظیم ساعت.", "panel-function"],
+    [14, 596, 459, 50, "Language", "زبان: انتخاب زبان پنل (انگلیسی یا ایتالیایی).", "language"],
+    [0, 690, 150, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "general-data": { title: "General Data", image: "images/GENERAL DATA", buttons: [
+    [12, 12, 461, 50, "SETTINGS", "سرتیتر «تنظیمات»: گزینه‌های زیرش (انتخاب سایز تا پروفایل روتوپوشر) تنظیمات دستگاه‌اند."],
+    [12, 66, 461, 50, "Size selection", "انتخاب سایز: انتخاب سایز کاری و ارسال آن به PLC.", "size-selection"],
+    [12, 117, 461, 50, "General data", "اطلاعات عمومی: جریان سروموتورهای قسمت‌های مختلف دستگاه.", "general-data"],
+    [12, 169, 461, 50, "Operating mode", "حالت‌های کار دستگاه: شبیه‌سازی، بارگیری، تخلیه، گرم‌شدن سیلرها و ...", "operating-mode"],
+    [12, 221, 461, 50, "Info system", "اطلاعات سیستم: شمای دستگاه، پیغام خطای درایوها و نقطه‌ی توقف.", "info-system"],
+    [12, 272, 461, 50, "Size data", "داده‌های سایز: پارامترهای هر سایز (طول محصول، بازشدن کیسه، سیلینگ، چرخش و ...).", "size-data-menu"],
+    [12, 324, 461, 50, "Rotopusher profiles", "پروفایل روتوپوشر: نقطه‌های مسیر حرکت روتوپوشر پیش‌فشردن.", "pre-compression-rotopusher-profile"],
+    [12, 377, 461, 52, "MANUAL FUNCTIONS", "سرتیتر «عملکردهای دستی»: Home و Jog و (با فلش پایین) بقیه‌ی عملیات دستی."],
+    [12, 432, 461, 50, "Home", "هوم: بردن سروموتورها به موقعیت مرجع (هوم) و دیدن وضعیت آن.", "home-servo"],
+    [12, 484, 461, 50, "Jog", "جاگ: حرکت دستی دستگاه با تنظیم زاویه‌ی مستر و سرعت جاگ.", "jog"],
+    [12, 537, 461, 53, "Scroll arrows", "فلش پایین: بقیه‌ی منو (Manual functions).", "manual-functions-menu"],
+    [495, 159, 495, 50, "Precompression", "جریان سرووی Precompression: جریان مجاز و جریان اندازه‌گیری‌شده‌ی سروموتورهای پیش‌فشردن و روتوپوشرهای آن.", "servo-current-precompression"],
+    [495, 217, 495, 50, "Turning", "جریان سرووی Turning: کاست‌های چرخش (DS و OS) و روتوپوشر چرخشی و خطی.", "servo-current-turning"],
+    [495, 277, 495, 50, "Bar conveyor / OHC", "جریان سرووی Bar conveyor / OHC: نوار نقاله و نوار نقاله‌ی بالاسری.", "servo-current-bar-conveyor-ohc"],
+    [495, 335, 495, 50, "Main compression", "جریان سرووی Main compression: فشردن اصلی سمت OS و DS.", "servo-current-main-compression"],
+    [495, 401, 495, 50, "Bag opening", "جریان سرووی Bag opening: بازوهای مکنده و بازکن‌های کیسه.", "servo-current-bag-opening"],
+    [495, 461, 495, 50, "Bag feeder", "جریان سرووی Bag feeder: پین‌ها و زنجیر تغذیه‌ی کیسه.", "servo-current-bags-feeder"],
+    [495, 522, 495, 50, "Sealing", "جریان سرووی Sealing: سیلر بالا، سیلر پایین و تاکننده‌ی کناری.", "servo-current-sealing"],
+    [0, 690, 150, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "size-data-menu": { title: "Size Data Menu", image: "images/SIZE DATA MENU", buttons: [
+    [12, 12, 461, 50, "SETTINGS", "سرتیتر «تنظیمات»: گزینه‌های زیرش (انتخاب سایز تا پروفایل روتوپوشر) تنظیمات دستگاه‌اند."],
+    [12, 66, 461, 50, "Size selection", "انتخاب سایز: انتخاب سایز کاری و ارسال آن به PLC.", "size-selection"],
+    [12, 117, 461, 50, "General data", "اطلاعات عمومی: جریان سروموتورهای قسمت‌های مختلف دستگاه.", "general-data"],
+    [12, 169, 461, 50, "Operating mode", "حالت‌های کار دستگاه: شبیه‌سازی، بارگیری، تخلیه، گرم‌شدن سیلرها و ...", "operating-mode"],
+    [12, 221, 461, 50, "Info system", "اطلاعات سیستم: شمای دستگاه، پیغام خطای درایوها و نقطه‌ی توقف.", "info-system"],
+    [12, 272, 461, 50, "Size data", "داده‌های سایز: پارامترهای هر سایز (طول محصول، بازشدن کیسه، سیلینگ، چرخش و ...).", "size-data-menu"],
+    [12, 324, 461, 50, "Rotopusher profiles", "پروفایل روتوپوشر: نقطه‌های مسیر حرکت روتوپوشر پیش‌فشردن.", "pre-compression-rotopusher-profile"],
+    [12, 377, 461, 52, "MANUAL FUNCTIONS", "سرتیتر «عملکردهای دستی»: Home و Jog و (با فلش پایین) بقیه‌ی عملیات دستی."],
+    [12, 432, 461, 50, "Home", "هوم: بردن سروموتورها به موقعیت مرجع (هوم) و دیدن وضعیت آن.", "home-servo"],
+    [12, 484, 461, 50, "Jog", "جاگ: حرکت دستی دستگاه با تنظیم زاویه‌ی مستر و سرعت جاگ.", "jog"],
+    [12, 537, 461, 53, "Scroll arrows", "فلش پایین: بقیه‌ی منو (Manual functions).", "manual-functions-menu"],
+    [500, 203, 480, 50, "General parameters", "پارامترهای عمومی سایز: طول محصول، تعداد ردیف، تعداد محصول در هر ردیف، سرعت کمینه و بیشینه‌ی بگر و توقف در فاز.", "size-data-general-parameters"],
+    [500, 255, 480, 50, "Precompression", "پارامترهای پیش‌فشردن (Precompression): بازشدن، پیش‌بازشدن و آفست‌های سمت DS و OS.", "size-data-precompression"],
+    [500, 307, 480, 50, "Bar conveyor / OHC", "پارامترهای فشردن و نوار نقاله (Bar conveyor / OHC): بازشدن و بسته‌شدن فشردن، بررسی آزاد بودن نوار نقاله، کم‌های الکتریکی.", "size-data-bar-conveyor-ohc"],
+    [500, 360, 480, 50, "Bags opening", "پارامترهای باز کردن کیسه (Bags opening): ارتفاع بازکن‌ها، موقعیت جلو و عقب، گام تغذیه‌ی کیسه و کم‌های الکتریکی.", "size-data-bags-opening-1"],
+    [500, 412, 480, 50, "Sealing parameters", "پارامترهای سیلینگ (Sealing): زمان و فشار دوخت، موقعیت‌ها، دمای سیلرها، تیغه‌ی ضایعات و مکش‌ها.", "size-data-sealing-parameters-1"],
+    [500, 461, 480, 50, "Side folder - Pack stopper", "پارامترهای تاکننده‌ی کناری و جلوگیرهای بسته (Side folder - Pack stopper).", "size-data-side-folder-pack-stopper"],
+    [500, 513, 480, 50, "Turning", "پارامتر واحد چرخش (Turning): خاموش یا چرخاندن ردیف اول، ردیف دوم یا همه‌ی ردیف‌ها.", "size-data-turning"],
+    [0, 690, 150, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "panel-function": { title: "Panel Function", image: "images/PANEL FUNCTION", buttons: [
+    [13, 70, 459, 51, "MANUAL FUNCTIONS", "سرتیتر «عملکردهای دستی»: شامل Manual operations و Valve control."],
+    [13, 226, 459, 49, "SETTINGS", "سرتیتر «تنظیمات»: شامل Alarm ON."],
+    [13, 334, 459, 49, "DATA COLLECTIONS", "سرتیتر «جمع‌آوری داده‌ها»: شامل Product data."],
+    [13, 440, 459, 50, "DISPLAY", "سرتیتر «نمایش»: شامل I/O check، Panel function و Language."],
+    [13, 12, 460, 60, "Menu up arrow", "فلش بالای منو: برگشت به منوی تنظیمات (Settings).", "settings-menu"],
+    [14, 121, 459, 50, "Manual operations", "عملیات دستی: حرکت و تست دستی قسمت‌ها (ترمز بازوها، هم‌ترازی سیلرها، تغذیه‌کننده‌ی کیسه، تست لامپ، ریست شیر اصلی).", "manual-operations-1"],
+    [14, 173, 459, 50, "Valve control", "کنترل شیرها: روشن و خاموش کردن دستی شیرهای باد دستگاه.", "valve-control-1"],
+    [14, 277, 459, 50, "Alarm ON", "آلارم‌های فعال: لیست آلارم‌هایی که همین الان فعال‌اند (با فلش، تاریخچه‌ی آلارم‌ها).", "alarm-on"],
+    [14, 384, 459, 50, "Product data", "اطلاعات تولید: تعداد سیکل، ساعت کار، تعداد بسته‌ها و سرعت بگر.", "product-data"],
+    [14, 491, 459, 50, "I/O check", "بررسی ورودی/خروجی‌ها: وضعیت لحظه‌ای ورودی و خروجی‌های تابلو (قرمز = فعال، آبی = غیرفعال).", "io-check-input-cc41"],
+    [14, 544, 459, 50, "Panel function", "عملکردهای پنل: پشتیبان‌گیری و بازگردانی اطلاعات، ورود کاربر و تنظیم ساعت.", "panel-function"],
+    [14, 596, 459, 50, "Language", "زبان: انتخاب زبان پنل (انگلیسی یا ایتالیایی).", "language"],
+    [486, 327, 508, 50, "Data backup", "پشتیبان‌گیری اطلاعات: از اطلاعات و سایزهای پنل نسخه‌ی پشتیبان می‌گیرد."],
+    [486, 390, 508, 50, "Data restore", "بازگردانی اطلاعات: اطلاعات را از نسخه‌ی پشتیبان برمی‌گرداند؛ مقدارهای فعلی جایگزین می‌شوند، مراقب باش."],
+    [486, 453, 508, 50, "Login", "ورود: رفتن به صفحه‌ی ورود کاربر (Login) برای باز شدن سطح دسترسی بالاتر.", "login"],
+    [486, 516, 508, 50, "Setup time", "تنظیم ساعت: تنظیم تاریخ و ساعت پنل."],
+    [0, 690, 150, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "alarm-on": { title: "Alarm ON", image: "images/ALARM ON", buttons: [
+    [0, 0, 110, 57, "Alarm ON", "عنوان صفحه: آلارم‌های فعال."],
+    [940, 5, 60, 52, ">>", "فلش: رفتن به تاریخچه‌ی آلارم‌ها (Alarm record).", "alarm-record"],
+    [0, 60, 938, 620, "Active alarms", "لیست آلارم‌های فعال: هر ردیف شماره و متن یک آلارم است."],
+    [0, 690, 203, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "alarm-record": { title: "Alarm record", image: "images/ALARM RECORD", buttons: [
+    [0, 0, 110, 57, "<<", "فلش: برگشت به آلارم‌های فعال (Alarm ON).", "alarm-on"],
+    [130, 0, 740, 57, "Alarm record", "تاریخچه‌ی آلارم‌ها: ساعت شروع، ساعت پایان، شماره و متن."],
+    [0, 60, 900, 620, "Alarm history", "لیست تاریخچه‌ی آلارم‌ها."],
+    [910, 60, 90, 620, "Scroll arrows", "فلش‌های بالا و پایین برای حرکت در لیست."],
+    [0, 690, 203, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "info-system": { title: "Info system", image: "images/INFO SYSTEM", buttons: [
+    [0, 0, 1000, 57, "Info system", "عنوان صفحه: شمای دستگاه با قسمت‌های دارای سروو؛ روی هر قسمت بزنی صفحه‌ی جریان سروو همان قسمت باز می‌شود."],
+    [112, 71, 114, 32, "Sealing (label)", "اسم قسمت: Sealing؛ رفتن به صفحه‌ی جریان سروو.", "servo-current-sealing"],
+    [203, 219, 86, 102, "Sealing", "قسمت Sealing روی شمای دستگاه؛ رفتن به صفحه‌ی جریان سروو.", "servo-current-sealing"],
+    [404, 79, 276, 28, "Bar conveyor / OHC (label)", "اسم قسمت: Bar conveyor / OHC؛ رفتن به صفحه‌ی جریان سروو.", "servo-current-bar-conveyor-ohc"],
+    [622, 225, 92, 100, "Bar conveyor / OHC", "قسمت Bar conveyor / OHC روی شمای دستگاه؛ رفتن به صفحه‌ی جریان سروو.", "servo-current-bar-conveyor-ohc"],
+    [752, 85, 215, 27, "Precompression (label)", "اسم قسمت: Precompression؛ رفتن به صفحه‌ی جریان سروو.", "servo-current-precompression"],
+    [844, 229, 83, 99, "Precompression", "قسمت Precompression روی شمای دستگاه؛ رفتن به صفحه‌ی جریان سروو.", "servo-current-precompression"],
+    [321, 120, 247, 26, "Main compression (label)", "اسم قسمت: Main compression؛ رفتن به صفحه‌ی جریان سروو.", "servo-current-main-compression"],
+    [492, 221, 92, 102, "Main compression", "قسمت Main compression روی شمای دستگاه؛ رفتن به صفحه‌ی جریان سروو.", "servo-current-main-compression"],
+    [361, 484, 170, 26, "Bag opening (label)", "اسم قسمت: Bag opening؛ رفتن به صفحه‌ی جریان سروو.", "servo-current-bag-opening"],
+    [385, 221, 86, 102, "Bag opening", "قسمت Bag opening روی شمای دستگاه؛ رفتن به صفحه‌ی جریان سروو.", "servo-current-bag-opening"],
+    [773, 484, 104, 26, "Turning (label)", "اسم قسمت: Turning؛ رفتن به صفحه‌ی جریان سروو.", "servo-current-turning"],
+    [736, 227, 87, 99, "Turning", "قسمت Turning روی شمای دستگاه؛ رفتن به صفحه‌ی جریان سروو.", "servo-current-turning"],
+    [2, 482, 173, 26, "Bags feeder (label)", "اسم قسمت: Bags feeder؛ رفتن به صفحه‌ی جریان سروو.", "servo-current-bags-feeder"],
+    [352, 354, 94, 96, "Bags feeder", "قسمت Bags feeder روی شمای دستگاه؛ رفتن به صفحه‌ی جریان سروو.", "servo-current-bags-feeder"],
+    [0, 560, 500, 140, "Error message", "پیغام خطای درایو (PAC DRIVE): OK یعنی خطایی نیست."],
+    [510, 560, 490, 140, "Interruption point", "نقطه‌ی توقف: محل وقفه یا خطا."],
+    [0, 690, 203, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "io-check-input-cc41": { title: "I/O check - Input CC41", image: "images/IO CHECK INPUT CC41", buttons: [
+    [380, 57, 217, 35, "INPUT +CC41", "ورودی‌های تابلوی CC41."],
+    [40, 60, 289, 622, "CN3 & CN4", "ورودی‌های کانکتور CN3 و CN4: I000 تا I019 و T00 تا T15. قرمز = فعال، آبی = غیرفعال."],
+    [375, 98, 286, 138, "K27040", "ماژول ورودی K27040: چهار ورودی I0 تا I3؛ قرمز = ورودی فعال، آبی = غیرفعال."],
+    [679, 98, 285, 138, "K27050", "ماژول ورودی K27050: چهار ورودی I0 تا I3؛ قرمز = ورودی فعال، آبی = غیرفعال."],
+    [375, 253, 286, 139, "K27060", "ماژول ورودی K27060: چهار ورودی I0 تا I3؛ قرمز = ورودی فعال، آبی = غیرفعال."],
+    [679, 253, 285, 139, "K27070", "ماژول ورودی K27070: چهار ورودی I0 تا I3؛ قرمز = ورودی فعال، آبی = غیرفعال."],
+    [375, 411, 286, 140, "K27110", "ماژول ورودی K27110: چهار ورودی I0 تا I3؛ قرمز = ورودی فعال، آبی = غیرفعال."],
+    [375, 622, 612, 63, "24 VDC control supply", "ولتاژ تغذیه‌ی کنترل ۲۴ ولت DC؛ عدد باید نزدیک ۲۴ باشد. اگر خیلی کم یا زیاد بود مشکل تغذیه است."],
+    [0, 0, 110, 57, "<<", "فلش قبلی: رفتن به صفحه‌ی «Manual Functions Menu».", "manual-functions-menu"],
+    [890, 0, 110, 57, ">>", "فلش بعدی: رفتن به صفحه‌ی «I/O check - Input TB41».", "io-check-input-tb41"],
+    [130, 0, 740, 57, "I/O check", "عنوان صفحه: بررسی ورودی‌های تابلوی CC41. با فلش‌های << و >> بین صفحه‌های ورودی و خروجی جابه‌جا می‌شوی."],
+    [0, 690, 203, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "io-check-input-tb41": { title: "I/O check - Input TB41", image: "images/IO CHECK INPUT TB41", buttons: [
+    [379, 70, 221, 38, "INPUT +TB41", "ورودی‌های تابلوی TB41."],
+    [51, 112, 290, 137, "K431030", "ماژول ورودی K431030: چهار ورودی I0 تا I3؛ قرمز = ورودی فعال، آبی = غیرفعال."],
+    [353, 112, 289, 137, "K431040", "ماژول ورودی K431040: چهار ورودی I0 تا I3؛ قرمز = ورودی فعال، آبی = غیرفعال."],
+    [656, 112, 289, 137, "K431050", "ماژول ورودی K431050: چهار ورودی I0 تا I3؛ قرمز = ورودی فعال، آبی = غیرفعال."],
+    [51, 268, 290, 140, "K431060", "ماژول ورودی K431060: چهار ورودی I0 تا I3؛ قرمز = ورودی فعال، آبی = غیرفعال."],
+    [0, 0, 110, 57, "<<", "فلش قبلی: رفتن به صفحه‌ی «I/O check - Input CC41».", "io-check-input-cc41"],
+    [890, 0, 110, 57, ">>", "فلش بعدی: رفتن به صفحه‌ی «I/O check - Input TB42».", "io-check-input-tb42"],
+    [130, 0, 740, 57, "I/O check", "عنوان صفحه: بررسی ورودی‌های تابلوی TB41."],
+    [0, 690, 203, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "io-check-input-tb42": { title: "I/O check - Input TB42", image: "images/IO CHECK INPUT TB42", buttons: [
+    [378, 70, 227, 38, "INPUT +TB42", "ورودی‌های تابلوی TB42."],
+    [51, 112, 288, 139, "K434030", "ماژول ورودی K434030: چهار ورودی I0 تا I3؛ قرمز = ورودی فعال، آبی = غیرفعال."],
+    [352, 112, 290, 139, "K434040", "ماژول ورودی K434040: چهار ورودی I0 تا I3؛ قرمز = ورودی فعال، آبی = غیرفعال."],
+    [656, 112, 289, 139, "K434050", "ماژول ورودی K434050: چهار ورودی I0 تا I3؛ قرمز = ورودی فعال، آبی = غیرفعال."],
+    [51, 268, 288, 140, "K434060", "ماژول ورودی K434060: چهار ورودی I0 تا I3؛ قرمز = ورودی فعال، آبی = غیرفعال."],
+    [352, 268, 290, 140, "K434070", "ماژول ورودی K434070: چهار ورودی I0 تا I3؛ قرمز = ورودی فعال، آبی = غیرفعال."],
+    [656, 268, 289, 140, "K434110", "ماژول ورودی K434110: چهار ورودی I0 تا I3؛ قرمز = ورودی فعال، آبی = غیرفعال."],
+    [51, 425, 288, 140, "K434120", "ماژول ورودی K434120: چهار ورودی I0 تا I3؛ قرمز = ورودی فعال، آبی = غیرفعال."],
+    [0, 0, 110, 57, "<<", "فلش قبلی: رفتن به صفحه‌ی «I/O check - Input TB41».", "io-check-input-tb41"],
+    [890, 0, 110, 57, ">>", "فلش بعدی: رفتن به صفحه‌ی «I/O check - Output CC41».", "io-check-output-cc41"],
+    [130, 0, 740, 57, "I/O check", "عنوان صفحه: بررسی ورودی‌های تابلوی TB42."],
+    [0, 690, 203, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "io-check-output-cc41": { title: "I/O check - Output CC41", image: "images/IO CHECK OUTPUT CC41", buttons: [
+    [379, 77, 242, 31, "OUTPUT +CC41", "خروجی‌های تابلوی CC41."],
+    [41, 115, 287, 359, "CN2", "خروجی‌های کانکتور CN2 (۱۶ خروجی، 000 تا 015). قرمز = روشن، آبی = خاموش."],
+    [376, 117, 290, 138, "K27130", "ماژول خروجی K27130: چهار خروجی Q0 تا Q3؛ قرمز = خروجی روشن، آبی = خاموش."],
+    [695, 117, 290, 138, "K27140", "ماژول خروجی K27140: چهار خروجی Q0 تا Q3؛ قرمز = خروجی روشن، آبی = خاموش."],
+    [0, 0, 110, 57, "<<", "فلش قبلی: رفتن به صفحه‌ی «I/O check - Input TB42».", "io-check-input-tb42"],
+    [890, 0, 110, 57, ">>", "فلش بعدی: رفتن به صفحه‌ی «I/O check - Output TB41 TB42».", "io-check-output-tb41-tb42"],
+    [130, 0, 740, 57, "I/O check", "عنوان صفحه: بررسی خروجی‌های تابلوی CC41."],
+    [0, 690, 203, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "io-check-output-tb41-tb42": { title: "I/O check - Output TB41 TB42", image: "images/IO CHECK OUTPUT TB41 TB42", buttons: [
+    [378, 74, 242, 34, "OUTPUT +TB41", "خروجی‌های تابلوی TB41."],
+    [51, 112, 288, 138, "K431110", "ماژول خروجی K431110: چهار خروجی Q0 تا Q3؛ قرمز = خروجی روشن، آبی = خاموش."],
+    [352, 112, 290, 138, "K431120", "ماژول خروجی K431120: چهار خروجی Q0 تا Q3؛ قرمز = خروجی روشن، آبی = خاموش."],
+    [656, 112, 289, 138, "K431130", "ماژول خروجی K431130: چهار خروجی Q0 تا Q3؛ قرمز = خروجی روشن، آبی = خاموش."],
+    [51, 269, 288, 139, "K431140", "ماژول خروجی K431140: چهار خروجی Q0 تا Q3؛ قرمز = خروجی روشن، آبی = خاموش."],
+    [352, 269, 290, 139, "K431150", "ماژول خروجی K431150: چهار خروجی Q0 تا Q3؛ قرمز = خروجی روشن، آبی = خاموش."],
+    [656, 269, 289, 139, "K431160", "ماژول خروجی K431160: چهار خروجی Q0 تا Q3؛ قرمز = خروجی روشن، آبی = خاموش."],
+    [378, 430, 242, 30, "OUTPUT +TB42", "خروجی‌های تابلوی TB42."],
+    [51, 481, 288, 139, "K434130", "ماژول خروجی K434130: چهار خروجی Q0 تا Q3؛ قرمز = خروجی روشن، آبی = خاموش."],
+    [352, 481, 290, 139, "K434140", "ماژول خروجی K434140: چهار خروجی Q0 تا Q3؛ قرمز = خروجی روشن، آبی = خاموش."],
+    [656, 481, 289, 139, "K434150", "ماژول خروجی K434150: چهار خروجی Q0 تا Q3؛ قرمز = خروجی روشن، آبی = خاموش."],
+    [0, 0, 110, 57, "<<", "فلش قبلی: رفتن به صفحه‌ی «I/O check - Output CC41».", "io-check-output-cc41"],
+    [890, 0, 110, 57, ">>", "فلش بعدی: رفتن به صفحه‌ی بعد."],
+    [130, 0, 740, 57, "I/O check", "عنوان صفحه: بررسی خروجی‌های تابلوهای TB41 و TB42."],
+    [0, 690, 203, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "jog": { title: "Jog", image: "images/JOG", buttons: [
+    [489, 106, 506, 47, "Jog", "عنوان صفحه: حرکت دستی دستگاه (جاگ)."],
+    [525, 191, 444, 62, "Master degrees", "زاویه‌ی مستر: زاویه‌ی لحظه‌ای محور اصلی دستگاه (درجه)؛ با جاگ تغییر می‌کند."],
+    [525, 274, 444, 60, "Jog speed", "سرعت جاگ: سرعتی که دستگاه موقع حرکت دستی دارد."],
+    [616, 344, 251, 211, "JOG", "دکمه‌ی JOG: برای حرکت دستی دستگاه؛ قبل از استفاده مطمئن شو کسی نزدیک قسمت‌های متحرک نیست."],
+    [489, 587, 506, 67, "Wireless jog disabled", "جاگ بی‌سیم غیرفعال: کلید فعال یا غیرفعال کردن جاگ از راه دور."],
+    [12, 66, 461, 50, "Size selection", "انتخاب سایز: انتخاب سایز کاری و ارسال آن به PLC.", "size-selection"],
+    [12, 117, 461, 50, "General data", "اطلاعات عمومی: جریان سروموتورهای قسمت‌های مختلف دستگاه.", "general-data"],
+    [12, 169, 461, 50, "Operating mode", "حالت‌های کار دستگاه: شبیه‌سازی، بارگیری، تخلیه، گرم‌شدن سیلرها و ...", "operating-mode"],
+    [12, 221, 461, 50, "Info system", "اطلاعات سیستم: شمای دستگاه، پیغام خطای درایوها و نقطه‌ی توقف.", "info-system"],
+    [12, 272, 461, 50, "Size data", "داده‌های سایز: پارامترهای هر سایز (طول محصول، بازشدن کیسه، سیلینگ، چرخش و ...).", "size-data-general-parameters"],
+    [12, 324, 461, 50, "Rotopusher profiles", "پروفایل روتوپوشر: نقطه‌های مسیر حرکت روتوپوشر پیش‌فشردن.", "pre-compression-rotopusher-profile"],
+    [12, 432, 461, 50, "Home", "هوم: بردن سروموتورها به موقعیت مرجع (هوم) و دیدن وضعیت آن.", "home-servo"],
+    [12, 484, 461, 50, "Jog", "جاگ: حرکت دستی دستگاه با تنظیم زاویه‌ی مستر و سرعت جاگ.", "jog"],
+    [12, 537, 461, 53, "Scroll arrows", "فلش پایین: بقیه‌ی منو (Manual functions).", "manual-functions-menu"],
+    [0, 690, 150, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "language": { title: "Language", image: "images/LANGUAGE", buttons: [
+    [13, 70, 459, 51, "MANUAL FUNCTIONS", "سرتیتر «عملکردهای دستی»: شامل Manual operations و Valve control."],
+    [13, 226, 459, 49, "SETTINGS", "سرتیتر «تنظیمات»: شامل Alarm ON."],
+    [13, 334, 459, 49, "DATA COLLECTIONS", "سرتیتر «جمع‌آوری داده‌ها»: شامل Product data."],
+    [13, 440, 459, 50, "DISPLAY", "سرتیتر «نمایش»: شامل I/O check، Panel function و Language."],
+    [13, 12, 460, 60, "Menu up arrow", "فلش بالای منو: برگشت به منوی تنظیمات (Settings).", "settings-menu"],
+    [14, 121, 459, 50, "Manual operations", "عملیات دستی: حرکت و تست دستی قسمت‌ها (ترمز بازوها، هم‌ترازی سیلرها، تغذیه‌کننده‌ی کیسه، تست لامپ، ریست شیر اصلی).", "manual-operations-1"],
+    [14, 173, 459, 50, "Valve control", "کنترل شیرها: روشن و خاموش کردن دستی شیرهای باد دستگاه.", "valve-control-1"],
+    [14, 277, 459, 50, "Alarm ON", "آلارم‌های فعال: لیست آلارم‌هایی که همین الان فعال‌اند (با فلش، تاریخچه‌ی آلارم‌ها).", "alarm-on"],
+    [14, 384, 459, 50, "Product data", "اطلاعات تولید: تعداد سیکل، ساعت کار، تعداد بسته‌ها و سرعت بگر.", "product-data"],
+    [14, 491, 459, 50, "I/O check", "بررسی ورودی/خروجی‌ها: وضعیت لحظه‌ای ورودی و خروجی‌های تابلو (قرمز = فعال، آبی = غیرفعال).", "io-check-input-cc41"],
+    [14, 544, 459, 50, "Panel function", "عملکردهای پنل: پشتیبان‌گیری و بازگردانی اطلاعات، ورود کاربر و تنظیم ساعت.", "panel-function"],
+    [14, 596, 459, 50, "Language", "زبان: انتخاب زبان پنل (انگلیسی یا ایتالیایی).", "language"],
+    [490, 453, 510, 66, "Language", "عنوان لیست زبان‌ها."],
+    [490, 520, 510, 62, "English", "انتخاب زبان انگلیسی برای پنل."],
+    [490, 585, 510, 62, "Italiano", "انتخاب زبان ایتالیایی برای پنل."],
+    [0, 690, 150, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "login": { title: "Login", image: "images/LOGIN", buttons: [
+    [0, 0, 1000, 51, "Change password", "عنوان صفحه: ورود کاربر (Login) و تغییر رمز."],
+    [125, 66, 758, 58, "User ID / Level", "شناسه‌ی کاربر و سطح دسترسی فعلی (Level). تا وارد نشده‌ای سطح ۰ است."],
+    [0, 134, 497, 391, "Log In", "بخش ورود: شناسه‌ی کاربر و رمز را وارد کن و بعد Confirm را بزن."],
+    [265, 194, 206, 55, "Enter User ID", "جای وارد کردن شناسه‌ی کاربر (User ID)."],
+    [265, 259, 206, 55, "Enter password", "جای وارد کردن رمز."],
+    [134, 339, 236, 95, "Confirm", "تأیید: ورود با شناسه و رمز واردشده؛ اگر درست باشد سطح دسترسی بالا می‌رود."],
+    [527, 182, 458, 328, "User list", "لیست کاربرها و سطح هرکدام (BRONZE ۱ تا ADMIN ۶). هرچه سطح بالاتر باشد دسترسی بیشتری داری."],
+    [238, 559, 183, 63, "Log Out", "خروج: کاربر فعلی از پنل خارج می‌شود و سطح دسترسی به ۰ برمی‌گردد."],
+    [513, 540, 484, 57, "Password Settings >>", "تنظیمات رمز: رفتن به صفحه‌ی تغییر رمز کاربرها."],
+    [513, 610, 484, 66, "Control status password >>", "رمز وضعیت کنترل: رفتن به صفحه‌ی تنظیم رمز وضعیت کنترل (جزئیات در دفترچه‌ی دستگاه)."],
+    [0, 690, 150, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "manual-operations-1": { title: "Manual operations", image: "images/MANUAL OPERATIONS 2", buttons: [
+    [482, 0, 200, 100, "Warning", "هشدار: تغییر یا حرکت دستی فقط وقتی مجاز است که STOP IMMEDIATE زده شده باشد."],
+    [13, 70, 459, 51, "MANUAL FUNCTIONS", "سرتیتر «عملکردهای دستی»: شامل Manual operations و Valve control."],
+    [13, 226, 459, 49, "SETTINGS", "سرتیتر «تنظیمات»: شامل Alarm ON."],
+    [13, 334, 459, 49, "DATA COLLECTIONS", "سرتیتر «جمع‌آوری داده‌ها»: شامل Product data."],
+    [13, 440, 459, 50, "DISPLAY", "سرتیتر «نمایش»: شامل I/O check، Panel function و Language."],
+    [489, 108, 506, 45, "Manual operations", "عنوان صفحه: عملیات دستی (صفحه‌ی ۱)."],
+    [489, 159, 506, 32, "Sealers alignment", "هم‌ترازی سیلرها: دو دکمه‌ی زیر برای هم‌تراز کردن دستی سیلرها هستند."],
+    [501, 198, 207, 72, "Sealers alignment (left)", "دکمه‌ی چپ هم‌ترازی سیلرها: حرکت دستی سیلرها در یک جهت."],
+    [765, 198, 211, 72, "Sealers alignment (right)", "دکمه‌ی راست هم‌ترازی سیلرها: حرکت دستی سیلرها در جهت مخالف."],
+    [489, 283, 506, 61, "Bag feeder backward", "تغذیه‌کننده‌ی کیسه به عقب: حرکت دستی تغذیه‌کننده‌ی کیسه رو به عقب."],
+    [489, 347, 506, 64, "Bag feeder forward", "تغذیه‌کننده‌ی کیسه به جلو: حرکت دستی تغذیه‌کننده‌ی کیسه رو به جلو."],
+    [489, 415, 506, 59, "Lamp test", "تست لامپ: روشن کردن لامپ‌های نشانگر برای اطمینان از سالم بودنشان."],
+    [489, 480, 506, 60, "Main valve reset", "ریست شیر اصلی: شیر اصلی باد را ریست می‌کند."],
+    [12, 10, 461, 55, "Menu up arrow", "فلش بالای منو: برگشت به منوی تنظیمات (Settings).", "settings-menu"],
+    [14, 121, 459, 50, "Manual operations", "عملیات دستی: حرکت و تست دستی قسمت‌ها (ترمز بازوها، هم‌ترازی سیلرها، تغذیه‌کننده‌ی کیسه، تست لامپ، ریست شیر اصلی).", "manual-operations-1"],
+    [14, 173, 459, 50, "Valve control", "کنترل شیرها: روشن و خاموش کردن دستی شیرهای باد دستگاه.", "valve-control-1"],
+    [14, 277, 459, 50, "Alarm ON", "آلارم‌های فعال: لیست آلارم‌هایی که همین الان فعال‌اند (با فلش، تاریخچه‌ی آلارم‌ها).", "alarm-on"],
+    [14, 384, 459, 50, "Product. data", "اطلاعات تولید: تعداد سیکل، ساعت کار، تعداد بسته‌ها و سرعت بگر.", "product-data"],
+    [14, 491, 459, 50, "I/O check", "بررسی ورودی/خروجی‌ها: وضعیت لحظه‌ای ورودی و خروجی‌های تابلو (قرمز = فعال، آبی = غیرفعال).", "io-check-input-cc41"],
+    [14, 544, 459, 50, "Panel function", "عملکردهای پنل: پشتیبان‌گیری و بازگردانی اطلاعات، ورود کاربر و تنظیم ساعت.", "panel-function"],
+    [14, 596, 459, 50, "Language", "زبان: انتخاب زبان پنل (انگلیسی یا ایتالیایی).", "language"],
+    [690, 545, 100, 50, "Down arrow", "فلش پایین: رفتن به ادامه‌ی عملیات دستی (صفحه‌ی ۲).", "manual-operations-2"],
+    [0, 690, 203, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "manual-operations-2": { title: "Manual operations (2)", image: "images/MANUAL OPERATIONS 1", buttons: [
+    [482, 0, 200, 100, "Warning", "هشدار: تغییر یا حرکت دستی فقط وقتی مجاز است که STOP IMMEDIATE زده شده باشد."],
+    [13, 70, 459, 51, "MANUAL FUNCTIONS", "سرتیتر «عملکردهای دستی»: شامل Manual operations و Valve control."],
+    [13, 226, 459, 49, "SETTINGS", "سرتیتر «تنظیمات»: شامل Alarm ON."],
+    [13, 334, 459, 49, "DATA COLLECTIONS", "سرتیتر «جمع‌آوری داده‌ها»: شامل Product data."],
+    [13, 440, 459, 50, "DISPLAY", "سرتیتر «نمایش»: شامل I/O check، Panel function و Language."],
+    [482, 108, 518, 45, "Manual operations", "عنوان صفحه: عملیات دستی (صفحه‌ی ۲)."],
+    [482, 156, 518, 100, "Suction arms brake", "ترمز بازوهای مکنده: وضعیت ترمز بازوهای مکش؛ آیکون قرمز یعنی هشدار یا ترمز فعال است."],
+    [482, 281, 518, 90, "Pre-compression step", "گام پیش‌فشردن: شماره‌ی مرحله‌ی فعلی در چرخه‌ی پیش‌فشردن؛ برای عیب‌یابی."],
+    [482, 386, 518, 90, "Compression step", "گام فشردن: شماره‌ی مرحله‌ی فعلی در چرخه‌ی فشردن؛ برای عیب‌یابی."],
+    [12, 10, 461, 55, "Menu up arrow", "فلش بالای منو: برگشت به منوی تنظیمات (Settings).", "settings-menu"],
+    [14, 121, 459, 50, "Manual operations", "عملیات دستی: حرکت و تست دستی قسمت‌ها (ترمز بازوها، هم‌ترازی سیلرها، تغذیه‌کننده‌ی کیسه، تست لامپ، ریست شیر اصلی).", "manual-operations-1"],
+    [14, 173, 459, 50, "Valve control", "کنترل شیرها: روشن و خاموش کردن دستی شیرهای باد دستگاه.", "valve-control-1"],
+    [14, 277, 459, 50, "Alarm ON", "آلارم‌های فعال: لیست آلارم‌هایی که همین الان فعال‌اند (با فلش، تاریخچه‌ی آلارم‌ها).", "alarm-on"],
+    [14, 384, 459, 50, "Product. data", "اطلاعات تولید: تعداد سیکل، ساعت کار، تعداد بسته‌ها و سرعت بگر.", "product-data"],
+    [14, 491, 459, 50, "I/O check", "بررسی ورودی/خروجی‌ها: وضعیت لحظه‌ای ورودی و خروجی‌های تابلو (قرمز = فعال، آبی = غیرفعال).", "io-check-input-cc41"],
+    [14, 544, 459, 50, "Panel function", "عملکردهای پنل: پشتیبان‌گیری و بازگردانی اطلاعات، ورود کاربر و تنظیم ساعت.", "panel-function"],
+    [14, 596, 459, 50, "Language", "زبان: انتخاب زبان پنل (انگلیسی یا ایتالیایی).", "language"],
+    [690, 35, 100, 50, "Up arrow", "فلش بالا: رفتن به بخش قبلی عملیات دستی (صفحه‌ی ۱).", "manual-operations-1"],
+    [0, 690, 203, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "operating-mode": { title: "Operating Mode", image: "images/OPERATING MODE", buttons: [
+    [497, 150, 495, 50, "Operating mode", "فهرست حالت‌های کار دستگاه؛ هر ردیف یک کلید روشن/خاموش دارد (سبز = روشن، آبی = خاموش)."],
+    [497, 210, 495, 41, "Product simulation", "شبیه‌سازی محصول: دستگاه را بدون محصول واقعی تست می‌کند؛ محصول شبیه‌سازی می‌شود. (سبز = روشن، آبی = خاموش)"],
+    [497, 264, 495, 40, "Packaging cut out", "قطع بسته‌بندی: بخش بسته‌بندی را از چرخه‌ی کار کنار می‌گذارد. (سبز = روشن، آبی = خاموش)"],
+    [497, 316, 495, 40, "Product loading", "بارگیری محصول: حالت مخصوص وارد کردن محصول به دستگاه. (سبز = روشن، آبی = خاموش)"],
+    [497, 367, 495, 41, "Product emptying", "تخلیه‌ی محصول: حالت مخصوص خالی کردن محصول از دستگاه. (سبز = روشن، آبی = خاموش)"],
+    [497, 418, 495, 39, "Gussets blow", "دمیدن باد روی گوشه‌های کناری کیسه (Gusset) برای باز شدنشان. (سبز = روشن، آبی = خاموش)"],
+    [497, 469, 495, 41, "Guides continuous mode", "حالت پیوسته‌ی گایدها: گایدهای هدایت‌کننده به‌صورت پیوسته کار می‌کنند. (سبز = روشن، آبی = خاموش)"],
+    [497, 522, 495, 39, "Sealers heating", "گرم‌شدن سیلرها: روشن یا خاموش کردن گرمایش سیلرها. (سبز = روشن، آبی = خاموش)"],
+    [497, 574, 495, 38, "Sealing sensor alarm", "آلارم سنسور سیلینگ: فعال یا غیرفعال کردن آلارم سنسور دوخت. (سبز = روشن، آبی = خاموش)"],
+    [497, 625, 495, 42, "BG stand alone off", "خاموش کردن حالت مستقل بگر (BG)؛ کاربرد دقیقش در دفترچه‌ی دستگاه آمده. (سبز = روشن، آبی = خاموش)"],
+    [12, 66, 461, 50, "Size selection", "انتخاب سایز: انتخاب سایز کاری و ارسال آن به PLC.", "size-selection"],
+    [12, 117, 461, 50, "General data", "اطلاعات عمومی: جریان سروموتورهای قسمت‌های مختلف دستگاه.", "general-data"],
+    [12, 169, 461, 50, "Operating mode", "حالت‌های کار دستگاه: شبیه‌سازی، بارگیری، تخلیه، گرم‌شدن سیلرها و ...", "operating-mode"],
+    [12, 221, 461, 50, "Info system", "اطلاعات سیستم: شمای دستگاه، پیغام خطای درایوها و نقطه‌ی توقف.", "info-system"],
+    [12, 272, 461, 50, "Size data", "داده‌های سایز: پارامترهای هر سایز (طول محصول، بازشدن کیسه، سیلینگ، چرخش و ...).", "size-data-general-parameters"],
+    [12, 324, 461, 50, "Rotopusher profiles", "پروفایل روتوپوشر: نقطه‌های مسیر حرکت روتوپوشر پیش‌فشردن.", "pre-compression-rotopusher-profile"],
+    [12, 432, 461, 50, "Home", "هوم: بردن سروموتورها به موقعیت مرجع (هوم) و دیدن وضعیت آن.", "home-servo"],
+    [12, 484, 461, 50, "Jog", "جاگ: حرکت دستی دستگاه با تنظیم زاویه‌ی مستر و سرعت جاگ.", "jog"],
+    [12, 537, 461, 53, "Scroll arrows", "فلش پایین: بقیه‌ی منو (Manual functions).", "manual-functions-menu"],
+    [0, 690, 150, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "pre-compression-rotopusher-profile": { title: "Pre-Compression Rotopusher Profile", image: "images/PRE-COMPRESSION ROTOPUSHER PROFILE", buttons: [
+    [0, 0, 930, 57, "Pre-compression Rotopusher Profile", "عنوان صفحه: پروفایل (مسیر حرکت) روتوپوشر پیش‌فشردن."],
+    [199, 70, 587, 73, "Warning", "هشدار: تغییر پارامترها فقط وقتی مجاز است که STOP IMMEDIATE زده شده باشد."],
+    [59, 190, 460, 490, "Profile diagram", "نمودار مسیر روتوپوشر روی محورهای X و Y؛ نقطه‌های A تا E مسیر حرکت را نشان می‌دهند."],
+    [605, 249, 315, 303, "Points table", "جدول مختصات X و Y نقطه‌های A تا E. با تغییر این مقدارها مسیر روتوپوشر عوض می‌شود."],
+    [684, 584, 278, 77, "DATA CONFIRM", "تأیید داده‌ها: مقدارهای جدول را ثبت می‌کند."],
+    [210, 690, 230, 60, "Login required", "قفل: برای تغییر مقدارها باید با سطح دسترسی مناسب وارد (Login) شوی."],
+    [0, 690, 150, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "product-data": { title: "Product data", image: "images/PRODUCT DATA", buttons: [
+    [13, 70, 459, 51, "MANUAL FUNCTIONS", "سرتیتر «عملکردهای دستی»: شامل Manual operations و Valve control."],
+    [13, 226, 459, 49, "SETTINGS", "سرتیتر «تنظیمات»: شامل Alarm ON."],
+    [13, 334, 459, 49, "DATA COLLECTIONS", "سرتیتر «جمع‌آوری داده‌ها»: شامل Product data."],
+    [13, 440, 459, 50, "DISPLAY", "سرتیتر «نمایش»: شامل I/O check، Panel function و Language."],
+    [489, 10, 417, 44, "Product. data", "عنوان صفحه: اطلاعات تولید."],
+    [525, 60, 285, 108, "Performed cycles", "تعداد سیکل‌های انجام‌شده‌ی دستگاه."],
+    [816, 110, 141, 53, "RESET (cycles)", "ریست: شمارنده‌ی سیکل‌ها را صفر می‌کند؛ برگشت ندارد."],
+    [525, 181, 285, 97, "Operation hours", "ساعت کار دستگاه."],
+    [816, 219, 141, 59, "RESET (hours)", "ریست: شمارنده‌ی ساعت کار را صفر می‌کند؛ برگشت ندارد."],
+    [525, 293, 285, 93, "Performed packages", "تعداد بسته‌های تولیدشده."],
+    [816, 328, 141, 58, "RESET (packages)", "ریست: شمارنده‌ی بسته‌ها را صفر می‌کند؛ برگشت ندارد."],
+    [533, 405, 337, 95, "BG actual speed", "سرعت لحظه‌ای بگر (بسته در دقیقه)."],
+    [489, 517, 506, 102, "Last packs reset time", "زمان آخرین ریست شمارنده‌ی بسته‌ها: تاریخ و ساعتی که شمارنده آخرین بار صفر شده است."],
+    [210, 690, 230, 60, "Login required", "قفل: برای تغییر مقدارها باید با سطح دسترسی مناسب وارد (Login) شوی."],
+    [12, 10, 461, 55, "Menu up arrow", "فلش بالای منو: برگشت به منوی تنظیمات (Settings).", "settings-menu"],
+    [14, 121, 459, 50, "Manual operations", "عملیات دستی: حرکت و تست دستی قسمت‌ها (ترمز بازوها، هم‌ترازی سیلرها، تغذیه‌کننده‌ی کیسه، تست لامپ، ریست شیر اصلی).", "manual-operations-1"],
+    [14, 173, 459, 50, "Valve control", "کنترل شیرها: روشن و خاموش کردن دستی شیرهای باد دستگاه.", "valve-control-1"],
+    [14, 277, 459, 50, "Alarm ON", "آلارم‌های فعال: لیست آلارم‌هایی که همین الان فعال‌اند (با فلش، تاریخچه‌ی آلارم‌ها).", "alarm-on"],
+    [14, 384, 459, 50, "Product. data", "اطلاعات تولید: تعداد سیکل، ساعت کار، تعداد بسته‌ها و سرعت بگر.", "product-data"],
+    [14, 491, 459, 50, "I/O check", "بررسی ورودی/خروجی‌ها: وضعیت لحظه‌ای ورودی و خروجی‌های تابلو (قرمز = فعال، آبی = غیرفعال).", "io-check-input-cc41"],
+    [14, 544, 459, 50, "Panel function", "عملکردهای پنل: پشتیبان‌گیری و بازگردانی اطلاعات، ورود کاربر و تنظیم ساعت.", "panel-function"],
+    [14, 596, 459, 50, "Language", "زبان: انتخاب زبان پنل (انگلیسی یا ایتالیایی).", "language"],
+    [0, 690, 203, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "servo-current-bag-opening": { title: "Bag opening", image: "images/SERVO CURRENT BAG OPENING", buttons: [
+    [13, 106, 777, 38, "Suction arms (A)", "بازوهای مکنده: جریان سروموتور (آمپر) (ستون خاکستری = مقدار مجاز، آبی = جریان اندازه‌گیری‌شده)"],
+    [13, 149, 777, 38, "OS Bag opening (A)", "بازکن کیسه سمت OS: جریان سروموتور (آمپر) (ستون خاکستری = مقدار مجاز، آبی = جریان اندازه‌گیری‌شده)"],
+    [13, 193, 777, 38, "DS Bag opening (A)", "بازکن کیسه سمت DS: جریان سروموتور (آمپر) (ستون خاکستری = مقدار مجاز، آبی = جریان اندازه‌گیری‌شده)"],
+    [13, 281, 777, 38, "Suction cups home offset (mm)", "آفست هوم مکنده‌ها (میلی‌متر): مقدار تنظیمی؛ بعد از تغییر DATA CONFIRM را بزن."],
+    [819, 210, 155, 94, "DATA CONFIRM", "تأیید داده‌ها: مقدارهای وارد‌شده (جریان مجاز و آفست‌ها) را ثبت می‌کند."],
+    [517, 344, 420, 32, "ERROR / POSITION / TEMPERAT.", "ستون‌های جدول پایین: شماره‌ی خطا (۰ = بدون خطا)، موقعیت فعلی و دمای هر سروو."],
+    [13, 383, 903, 47, "SUCTION ARMS", "وضعیت درایو بازوهای مکنده: شماره‌ی خطا (۰ یعنی بدون خطا)، موقعیت فعلی و دما."],
+    [13, 434, 903, 47, "OS BAG OPENING", "وضعیت درایو بازکن کیسه سمت OS: شماره‌ی خطا (۰ یعنی بدون خطا)، موقعیت فعلی و دما."],
+    [13, 485, 903, 47, "DS BAG OPENING", "وضعیت درایو بازکن کیسه سمت DS: شماره‌ی خطا (۰ یعنی بدون خطا)، موقعیت فعلی و دما."],
+    [927, 393, 49, 140, "Temperature / arrows", "آیکون دما و فلش‌های حرکت در لیست سرووها."],
+    [440, 603, 476, 76, "Error message", "پیغام خطای درایو؛ OK یعنی خطایی نیست."],
+    [210, 690, 230, 60, "Login required", "قفل: برای تغییر مقدارها باید با سطح دسترسی مناسب وارد (Login) شوی."],
+    [0, 0, 110, 57, "<<", "فلش قبلی: رفتن به صفحه‌ی «Main compression».", "servo-current-main-compression"],
+    [890, 0, 110, 57, ">>", "فلش بعدی: رفتن به صفحه‌ی «Bags feeder».", "servo-current-bags-feeder"],
+    [130, 0, 740, 57, "Bag opening", "عنوان صفحه: جریان و وضعیت سروموتورهای قسمت باز کردن کیسه (Bag opening). با فلش‌های << و >> بین قسمت‌ها جابه‌جا می‌شوی."],
+    [0, 690, 203, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "servo-current-bags-feeder": { title: "Bags feeder", image: "images/SERVO CURRENT BAGS FEEDER", buttons: [
+    [13, 108, 777, 40, "Bags feeder pins (A)", "پین‌های تغذیه‌کننده‌ی کیسه: جریان سروموتور (آمپر) (ستون خاکستری = مقدار مجاز، آبی = جریان اندازه‌گیری‌شده)"],
+    [13, 151, 777, 40, "Bags feeder chain (A)", "زنجیر تغذیه‌کننده‌ی کیسه: جریان سروموتور (آمپر) (ستون خاکستری = مقدار مجاز، آبی = جریان اندازه‌گیری‌شده)"],
+    [13, 283, 777, 40, "Bags feeder home offset (mm)", "آفست هوم تغذیه‌کننده‌ی کیسه (میلی‌متر): مقدار تنظیمی؛ بعد از تغییر DATA CONFIRM را بزن."],
+    [819, 210, 155, 94, "DATA CONFIRM", "تأیید داده‌ها: مقدارهای وارد‌شده (جریان مجاز و آفست‌ها) را ثبت می‌کند."],
+    [517, 344, 420, 32, "ERROR / POSITION / TEMPERAT.", "ستون‌های جدول پایین: شماره‌ی خطا (۰ = بدون خطا)، موقعیت فعلی و دمای هر سروو."],
+    [13, 383, 903, 47, "BAGS FEEDER PINS CHAIN", "وضعیت درایو زنجیر پین‌های تغذیه‌کننده: شماره‌ی خطا (۰ یعنی بدون خطا)، موقعیت فعلی و دما."],
+    [13, 434, 903, 47, "BAGS FEEDER CHAIN", "وضعیت درایو زنجیر تغذیه‌کننده: شماره‌ی خطا (۰ یعنی بدون خطا)، موقعیت فعلی و دما."],
+    [927, 393, 49, 140, "Temperature / arrows", "آیکون دما و فلش‌های حرکت در لیست سرووها."],
+    [440, 603, 476, 76, "Error message", "پیغام خطای درایو؛ OK یعنی خطایی نیست."],
+    [210, 690, 230, 60, "Login required", "قفل: برای تغییر مقدارها باید با سطح دسترسی مناسب وارد (Login) شوی."],
+    [0, 0, 110, 57, "<<", "فلش قبلی: رفتن به صفحه‌ی «Bag opening».", "servo-current-bag-opening"],
+    [890, 0, 110, 57, ">>", "فلش بعدی: رفتن به صفحه‌ی «Sealing».", "servo-current-sealing"],
+    [130, 0, 740, 57, "Bags feeder", "عنوان صفحه: جریان و وضعیت سروموتورهای قسمت تغذیه‌ی کیسه (Bags feeder). با فلش‌های << و >> بین قسمت‌ها جابه‌جا می‌شوی."],
+    [0, 690, 203, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "servo-current-bar-conveyor-ohc": { title: "Bar conveyor / OHC", image: "images/SERVO CURRENT BAR CONVEYOR OHC", buttons: [
+    [13, 125, 777, 46, "Bar conveyor (A)", "نوار نقاله: جریان سروموتور (آمپر) (ستون خاکستری = مقدار مجاز، آبی = جریان اندازه‌گیری‌شده)"],
+    [13, 179, 777, 46, "Overhead conveyor (A)", "نوار نقاله‌ی بالاسری (OHC): جریان سروموتور (آمپر) (ستون خاکستری = مقدار مجاز، آبی = جریان اندازه‌گیری‌شده)"],
+    [13, 230, 777, 46, "OHC compression phase (A)", "فاز فشردن نوار نقاله‌ی بالاسری: جریان سروموتور (آمپر) (ستون خاکستری = مقدار مجاز، آبی = جریان اندازه‌گیری‌شده)"],
+    [819, 210, 155, 94, "DATA CONFIRM", "تأیید داده‌ها: مقدارهای وارد‌شده (جریان مجاز و آفست‌ها) را ثبت می‌کند."],
+    [517, 344, 420, 32, "ERROR / POSITION / TEMPERAT.", "ستون‌های جدول پایین: شماره‌ی خطا (۰ = بدون خطا)، موقعیت فعلی و دمای هر سروو."],
+    [13, 383, 903, 47, "BAR CONVEYOR", "وضعیت درایو نوار نقاله: شماره‌ی خطا (۰ یعنی بدون خطا)، موقعیت فعلی و دما."],
+    [13, 434, 903, 47, "OVERHEAD CONVEYOR", "وضعیت درایو نوار نقاله‌ی بالاسری: شماره‌ی خطا (۰ یعنی بدون خطا)، موقعیت فعلی و دما."],
+    [927, 393, 49, 140, "Temperature / arrows", "آیکون دما و فلش‌های حرکت در لیست سرووها."],
+    [440, 603, 476, 76, "Error message", "پیغام خطای درایو؛ OK یعنی خطایی نیست."],
+    [210, 690, 230, 60, "Login required", "قفل: برای تغییر مقدارها باید با سطح دسترسی مناسب وارد (Login) شوی."],
+    [0, 0, 110, 57, "<<", "فلش قبلی: رفتن به صفحه‌ی «Turning».", "servo-current-turning"],
+    [890, 0, 110, 57, ">>", "فلش بعدی: رفتن به صفحه‌ی «Main compression».", "servo-current-main-compression"],
+    [130, 0, 740, 57, "Bar conveyor / OHC", "عنوان صفحه: جریان و وضعیت سروموتورهای قسمت نوار نقاله و OHC. با فلش‌های << و >> بین قسمت‌ها جابه‌جا می‌شوی."],
+    [0, 690, 203, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "servo-current-main-compression": { title: "Main compression", image: "images/SERVO CURRENT MAIN COMPRESSION", buttons: [
+    [13, 125, 777, 46, "OS Compression (A)", "فشردن سمت OS: جریان سروموتور (آمپر) (ستون خاکستری = مقدار مجاز، آبی = جریان اندازه‌گیری‌شده)"],
+    [13, 179, 777, 46, "DS Compression (A)", "فشردن سمت DS: جریان سروموتور (آمپر) (ستون خاکستری = مقدار مجاز، آبی = جریان اندازه‌گیری‌شده)"],
+    [13, 230, 777, 46, "OS compression home offset (°)", "آفست هوم فشردن سمت OS (درجه): مقدار تنظیمی؛ بعد از تغییر DATA CONFIRM را بزن."],
+    [13, 281, 777, 46, "DS compression home offset (°)", "آفست هوم فشردن سمت DS (درجه): مقدار تنظیمی؛ بعد از تغییر DATA CONFIRM را بزن."],
+    [819, 210, 155, 94, "DATA CONFIRM", "تأیید داده‌ها: مقدارهای وارد‌شده (جریان مجاز و آفست‌ها) را ثبت می‌کند."],
+    [517, 344, 420, 32, "ERROR / POSITION / TEMPERAT.", "ستون‌های جدول پایین: شماره‌ی خطا (۰ = بدون خطا)، موقعیت فعلی و دمای هر سروو."],
+    [13, 383, 903, 47, "OS COMPRESSION", "وضعیت درایو فشردن سمت OS: شماره‌ی خطا (۰ یعنی بدون خطا)، موقعیت فعلی و دما."],
+    [13, 434, 903, 47, "DS COMPRESSION", "وضعیت درایو فشردن سمت DS: شماره‌ی خطا (۰ یعنی بدون خطا)، موقعیت فعلی و دما."],
+    [927, 393, 49, 140, "Temperature / arrows", "آیکون دما و فلش‌های حرکت در لیست سرووها."],
+    [440, 603, 476, 76, "Error message", "پیغام خطای درایو؛ OK یعنی خطایی نیست."],
+    [210, 690, 230, 60, "Login required", "قفل: برای تغییر مقدارها باید با سطح دسترسی مناسب وارد (Login) شوی."],
+    [0, 0, 110, 57, "<<", "فلش قبلی: رفتن به صفحه‌ی «Bar conveyor / OHC».", "servo-current-bar-conveyor-ohc"],
+    [890, 0, 110, 57, ">>", "فلش بعدی: رفتن به صفحه‌ی «Bag opening».", "servo-current-bag-opening"],
+    [130, 0, 740, 57, "Main compression", "عنوان صفحه: جریان و وضعیت سروموتورهای قسمت فشردن اصلی (Main compression). با فلش‌های << و >> بین قسمت‌ها جابه‌جا می‌شوی."],
+    [0, 690, 203, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "servo-current-precompression": { title: "Precompression", image: "images/SERVO CURRENT PRECOMPRESSION", buttons: [
+    [13, 106, 777, 38, "Pre-comp. rotary rotopush (A)", "روتوپوشر چرخشی پیش‌فشردن: جریان سروموتور (آمپر) (ستون خاکستری = مقدار مجاز، آبی = جریان اندازه‌گیری‌شده)"],
+    [13, 149, 777, 38, "Pre-comp. linear rotopush (A)", "روتوپوشر خطی پیش‌فشردن: جریان سروموتور (آمپر) (ستون خاکستری = مقدار مجاز، آبی = جریان اندازه‌گیری‌شده)"],
+    [13, 193, 777, 38, "Pre-compression DS (A)", "پیش‌فشردن سمت DS (سمت درایو): جریان سروموتور (آمپر) (ستون خاکستری = مقدار مجاز، آبی = جریان اندازه‌گیری‌شده)"],
+    [13, 236, 777, 38, "Pre-compression OS (A)", "پیش‌فشردن سمت OS (سمت اپراتور): جریان سروموتور (آمپر) (ستون خاکستری = مقدار مجاز، آبی = جریان اندازه‌گیری‌شده)"],
+    [13, 281, 777, 38, "Pre-compression home value (mm)", "مقدار هوم پیش‌فشردن (میلی‌متر): مقدار تنظیمی؛ بعد از تغییر DATA CONFIRM را بزن."],
+    [819, 210, 155, 94, "DATA CONFIRM", "تأیید داده‌ها: مقدارهای وارد‌شده (جریان مجاز و آفست‌ها) را ثبت می‌کند."],
+    [517, 344, 420, 32, "ERROR / POSITION / TEMPERAT.", "ستون‌های جدول پایین: شماره‌ی خطا (۰ = بدون خطا)، موقعیت فعلی و دمای هر سروو."],
+    [13, 383, 903, 47, "OS PRE-COMPRESSION", "وضعیت درایو پیش‌فشردن سمت OS: شماره‌ی خطا (۰ یعنی بدون خطا)، موقعیت فعلی و دما."],
+    [13, 434, 903, 47, "DS PRE-COMPRESSION", "وضعیت درایو پیش‌فشردن سمت DS: شماره‌ی خطا (۰ یعنی بدون خطا)، موقعیت فعلی و دما."],
+    [13, 485, 903, 47, "LIN. ROTOP. PRE-COMPRESSIONE", "وضعیت درایو روتوپوشر خطی پیش‌فشردن: شماره‌ی خطا (۰ یعنی بدون خطا)، موقعیت فعلی و دما."],
+    [13, 536, 903, 47, "ROT. ROTOP. PRE-COMPRESSIONE", "وضعیت درایو روتوپوشر چرخشی پیش‌فشردن: شماره‌ی خطا (۰ یعنی بدون خطا)، موقعیت فعلی و دما."],
+    [927, 393, 49, 140, "Temperature / arrows", "آیکون دما و فلش‌های حرکت در لیست سرووها."],
+    [440, 603, 476, 76, "Error message", "پیغام خطای درایو؛ OK یعنی خطایی نیست."],
+    [210, 690, 230, 60, "Login required", "قفل: برای تغییر مقدارها باید با سطح دسترسی مناسب وارد (Login) شوی."],
+    [0, 0, 110, 57, "<<", "فلش قبلی: رفتن به صفحه‌ی «General Data».", "general-data"],
+    [890, 0, 110, 57, ">>", "فلش بعدی: رفتن به صفحه‌ی «Turning».", "servo-current-turning"],
+    [130, 0, 740, 57, "Precompression", "عنوان صفحه: جریان و وضعیت سروموتورهای قسمت پیش‌فشردن (Precompression). با فلش‌های << و >> بین قسمت‌ها جابه‌جا می‌شوی."],
+    [0, 690, 203, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "servo-current-sealing": { title: "Sealing", image: "images/SERVO CURRENT SEALING", buttons: [
+    [13, 106, 777, 38, "Upper sealer (A)", "سیلر بالا: جریان سروموتور (آمپر) (ستون خاکستری = مقدار مجاز، آبی = جریان اندازه‌گیری‌شده)"],
+    [13, 149, 777, 38, "Lower sealer (A)", "سیلر پایین: جریان سروموتور (آمپر) (ستون خاکستری = مقدار مجاز، آبی = جریان اندازه‌گیری‌شده)"],
+    [13, 193, 777, 38, "Side folder (A)", "تاکننده‌ی کناری: جریان سروموتور (آمپر) (ستون خاکستری = مقدار مجاز، آبی = جریان اندازه‌گیری‌شده)"],
+    [13, 281, 777, 38, "Side folder home value (mm)", "مقدار هوم تاکننده‌ی کناری (میلی‌متر): مقدار تنظیمی؛ بعد از تغییر DATA CONFIRM را بزن."],
+    [819, 210, 155, 94, "DATA CONFIRM", "تأیید داده‌ها: مقدارهای وارد‌شده (جریان مجاز و آفست‌ها) را ثبت می‌کند."],
+    [517, 344, 420, 32, "ERROR / POSITION / TEMPERAT.", "ستون‌های جدول پایین: شماره‌ی خطا (۰ = بدون خطا)، موقعیت فعلی و دمای هر سروو."],
+    [13, 383, 903, 47, "UPPER SEALER", "وضعیت درایو سیلر بالا: شماره‌ی خطا (۰ یعنی بدون خطا)، موقعیت فعلی و دما."],
+    [13, 434, 903, 47, "LOWER SEALER", "وضعیت درایو سیلر پایین: شماره‌ی خطا (۰ یعنی بدون خطا)، موقعیت فعلی و دما."],
+    [13, 485, 903, 47, "SIDE FOLDER", "وضعیت درایو تاکننده‌ی کناری: شماره‌ی خطا (۰ یعنی بدون خطا)، موقعیت فعلی و دما."],
+    [927, 393, 49, 140, "Temperature / arrows", "آیکون دما و فلش‌های حرکت در لیست سرووها."],
+    [440, 603, 476, 76, "Error message", "پیغام خطای درایو؛ OK یعنی خطایی نیست."],
+    [210, 690, 230, 60, "Login required", "قفل: برای تغییر مقدارها باید با سطح دسترسی مناسب وارد (Login) شوی."],
+    [0, 0, 110, 57, "<<", "فلش قبلی: رفتن به صفحه‌ی «Bags feeder».", "servo-current-bags-feeder"],
+    [890, 0, 110, 57, ">>", "فلش بعدی: رفتن به صفحه‌ی بعد."],
+    [130, 0, 740, 57, "Sealing", "عنوان صفحه: جریان و وضعیت سروموتورهای قسمت سیلینگ (Sealing). با فلش‌های << و >> بین قسمت‌ها جابه‌جا می‌شوی."],
+    [0, 690, 203, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "servo-current-turning": { title: "Turning", image: "images/SERVO CURRENT TURNING", buttons: [
+    [13, 106, 777, 38, "Rotary rotopusher turning (A)", "روتوپوشر چرخشی واحد چرخش: جریان سروموتور (آمپر) (ستون خاکستری = مقدار مجاز، آبی = جریان اندازه‌گیری‌شده)"],
+    [13, 149, 777, 38, "Linear rotopusher turning (A)", "روتوپوشر خطی واحد چرخش: جریان سروموتور (آمپر) (ستون خاکستری = مقدار مجاز، آبی = جریان اندازه‌گیری‌شده)"],
+    [13, 193, 777, 38, "Turning cassette DS (A)", "کاست چرخش سمت DS: جریان سروموتور (آمپر) (ستون خاکستری = مقدار مجاز، آبی = جریان اندازه‌گیری‌شده)"],
+    [13, 236, 777, 38, "Turning cassette OS (A)", "کاست چرخش سمت OS: جریان سروموتور (آمپر) (ستون خاکستری = مقدار مجاز، آبی = جریان اندازه‌گیری‌شده)"],
+    [13, 281, 777, 44, "Turning home offset", "آفست هوم واحد چرخش (با فلش پایین پیدا می‌شود): مقدار تنظیمی؛ بعد از تغییر DATA CONFIRM را بزن."],
+    [819, 210, 155, 94, "DATA CONFIRM", "تأیید داده‌ها: مقدارهای وارد‌شده (جریان مجاز و آفست‌ها) را ثبت می‌کند."],
+    [517, 344, 420, 32, "ERROR / POSITION / TEMPERAT.", "ستون‌های جدول پایین: شماره‌ی خطا (۰ = بدون خطا)، موقعیت فعلی و دمای هر سروو."],
+    [13, 383, 903, 47, "DS TURNING CASSETTE", "وضعیت درایو کاست چرخش سمت DS: شماره‌ی خطا (۰ یعنی بدون خطا)، موقعیت فعلی و دما."],
+    [13, 434, 903, 47, "OS TURNING CASSETTE", "وضعیت درایو کاست چرخش سمت OS: شماره‌ی خطا (۰ یعنی بدون خطا)، موقعیت فعلی و دما."],
+    [13, 485, 903, 47, "ROTARY ROTOPUSHER TURNING", "وضعیت درایو روتوپوشر چرخشی: شماره‌ی خطا (۰ یعنی بدون خطا)، موقعیت فعلی و دما."],
+    [13, 536, 903, 47, "LINEAR ROTOPUSHER TURNING", "وضعیت درایو روتوپوشر خطی: شماره‌ی خطا (۰ یعنی بدون خطا)، موقعیت فعلی و دما."],
+    [927, 393, 49, 140, "Temperature / arrows", "آیکون دما و فلش‌های حرکت در لیست سرووها."],
+    [440, 603, 476, 76, "Error message", "پیغام خطای درایو؛ OK یعنی خطایی نیست."],
+    [210, 690, 230, 60, "Login required", "قفل: برای تغییر مقدارها باید با سطح دسترسی مناسب وارد (Login) شوی."],
+    [0, 0, 110, 57, "<<", "فلش قبلی: رفتن به صفحه‌ی «Precompression».", "servo-current-precompression"],
+    [890, 0, 110, 57, ">>", "فلش بعدی: رفتن به صفحه‌ی «Bar conveyor / OHC».", "servo-current-bar-conveyor-ohc"],
+    [130, 0, 740, 57, "Turning", "عنوان صفحه: جریان و وضعیت سروموتورهای قسمت چرخش (Turning). با فلش‌های << و >> بین قسمت‌ها جابه‌جا می‌شوی."],
+    [0, 690, 203, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "size-data-bags-opening-1": { title: "Bags opening", image: "images/SIZE DATA BAGS OPENING 1", buttons: [
+    [0, 208, 950, 47, "4.1 Bag openers height (mm)", "ارتفاع بازکن‌های کیسه (میلی‌متر). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 259, 950, 46, "4.2 Bag opener backward position (°)", "موقعیت عقب بازکن کیسه (درجه). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 310, 950, 46, "4.2 Bag opener forward position (°)", "موقعیت جلوی بازکن کیسه (درجه). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 360, 950, 45, "4.4 Bags feeder pitch (mm)", "گام تغذیه‌کننده‌ی کیسه: فاصله‌ی بین کیسه‌ها روی تغذیه‌کننده (میلی‌متر). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 409, 950, 45, "4.5 Bag holes distance (mm)", "فاصله‌ی سوراخ‌های کیسه (میلی‌متر). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 474, 407, 30, "Electric cams", "کم‌های الکتریکی: زاویه‌ی روشن و خاموش شدن خروجی‌ها در چرخه‌ی دستگاه."],
+    [0, 510, 990, 46, "Fingers bag jog mode", "انگشتی‌های کیسه در حالت جاگ. کم الکتریکی: زاویه‌ی روشن (On)، خاموش (Off) و Cmp. (جبران). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 561, 990, 46, "Fingers bag automat.", "انگشتی‌های کیسه در حالت اتومات. کم الکتریکی: زاویه‌ی روشن (On)، خاموش (Off) و Cmp. (جبران). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [297, 621, 407, 52, "Bags opening (down arrow)", "فلش پایین: ادامه‌ی پارامترهای باز کردن کیسه (صفحه‌ی ۲).", "size-data-bags-opening-2"],
+    [210, 690, 230, 60, "Login required", "قفل: برای تغییر مقدارها باید با سطح دسترسی مناسب وارد (Login) شوی."],
+    [0, 0, 110, 57, "<<", "فلش قبلی: رفتن به صفحه‌ی «Bar conveyor / OHC».", "size-data-bar-conveyor-ohc"],
+    [890, 0, 110, 57, ">>", "فلش بعدی: رفتن به صفحه‌ی «Bags opening (2)».", "size-data-bags-opening-2"],
+    [130, 0, 740, 57, "Bags opening", "عنوان صفحه و زاویه‌ی فعلی (Degrees) دستگاه. فلش‌های << و >> برای رفتن به صفحه قبل و بعد."],
+    [20, 64, 250, 50, "SAVE DATA", "ذخیره اطلاعات: مقدارهای وارد‌شده را برای این سایز در پنل ذخیره می‌کند."],
+    [724, 64, 255, 50, "ACTIVATION SIZE", "فعال‌سازی سایز: مقدارهای این سایز را روی دستگاه اعمال می‌کند."],
+    [20, 128, 400, 70, "STORED SIZE", "سایز ذخیره‌شده: نام سایزی که مقدارهای ستون خاکستری مال آن است."],
+    [580, 128, 410, 70, "WORKING SIZE", "سایز در حال کار: سایزی که الان روی دستگاه فعال است."],
+    [0, 690, 203, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "size-data-bags-opening-2": { title: "Bags opening (2)", image: "images/SIZE DATA BAGS OPENING 2", buttons: [
+    [0, 217, 982, 32, "Electric cams header", "کم‌های الکتریکی؛ ستون‌ها: On (روشن)، Off (خاموش)، Cmp. (جبران)؛ سمت چپ ذخیره‌شده، سمت راست در حال کار."],
+    [0, 251, 982, 46, "Suction arms vacuum", "وکیوم بازوهای مکنده. کم الکتریکی: زاویه‌ی روشن (On)، خاموش (Off) و Cmp. (جبران). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 301, 982, 46, "Bags feeder start", "شروع تغذیه‌کننده‌ی کیسه. کم الکتریکی: زاویه‌ی روشن (On)، خاموش (Off) و Cmp. (جبران). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 352, 982, 46, "Bag opened control", "کنترل باز بودن کیسه. کم الکتریکی: زاویه‌ی روشن (On)، خاموش (Off) و Cmp. (جبران). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 402, 982, 46, "Bags opener blow", "باد بازکن کیسه. کم الکتریکی: زاویه‌ی روشن (On)، خاموش (Off) و Cmp. (جبران). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 452, 982, 46, "Package guide", "گاید بسته. کم الکتریکی: زاویه‌ی روشن (On)، خاموش (Off) و Cmp. (جبران). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 501, 982, 46, "Package guide control", "کنترل گاید بسته. کم الکتریکی: زاویه‌ی روشن (On)، خاموش (Off) و Cmp. (جبران). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [297, 621, 407, 52, "Bags opening (up arrow)", "فلش بالا: برگشت به صفحه‌ی ۱ پارامترهای باز کردن کیسه.", "size-data-bags-opening-1"],
+    [210, 690, 230, 60, "Login required", "قفل: برای تغییر مقدارها باید با سطح دسترسی مناسب وارد (Login) شوی."],
+    [0, 0, 110, 57, "<<", "فلش قبلی: رفتن به صفحه‌ی «Bags opening».", "size-data-bags-opening-1"],
+    [890, 0, 110, 57, ">>", "فلش بعدی: رفتن به صفحه‌ی «Sealing parameters».", "size-data-sealing-parameters-1"],
+    [130, 0, 740, 57, "Bags opening (2)", "عنوان صفحه و زاویه‌ی فعلی (Degrees) دستگاه. فلش‌های << و >> برای رفتن به صفحه قبل و بعد."],
+    [20, 64, 250, 50, "SAVE DATA", "ذخیره اطلاعات: مقدارهای وارد‌شده را برای این سایز در پنل ذخیره می‌کند."],
+    [724, 64, 255, 50, "ACTIVATION SIZE", "فعال‌سازی سایز: مقدارهای این سایز را روی دستگاه اعمال می‌کند."],
+    [20, 128, 400, 70, "STORED SIZE", "سایز ذخیره‌شده: نام سایزی که مقدارهای ستون خاکستری مال آن است."],
+    [580, 128, 410, 70, "WORKING SIZE", "سایز در حال کار: سایزی که الان روی دستگاه فعال است."],
+    [0, 690, 203, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "size-data-bar-conveyor-ohc": { title: "Bar conveyor / OHC", image: "images/SIZE DATA BAR CONVEYOR OHC", buttons: [
+    [0, 208, 950, 47, "3.1 Compression open value (mm)", "مقدار باز بودن فشردن (میلی‌متر). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 259, 950, 46, "3.2 Compression preopening val. (mm)", "مقدار پیش‌بازشدن فشردن (میلی‌متر). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 310, 950, 46, "3.3 Compression closing value (mm)", "مقدار بسته‌شدن فشردن (میلی‌متر). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 360, 950, 45, "3.4 Start check bar conveyor free (°)", "زاویه‌ی شروع بررسی آزاد بودن نوار نقاله (درجه). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 409, 950, 45, "3.5 End check bar conveyor free (°)", "زاویه‌ی پایان بررسی آزاد بودن نوار نقاله (درجه). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 460, 950, 45, "3.6 Bar conveyor speed offset (°)", "آفست سرعت نوار نقاله (درجه). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 510, 950, 45, "3.7 Bar conv. stop in compr.", "توقف نوار نقاله در زمان فشردن: ۰ = خاموش، ۱ = روشن. (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 574, 408, 26, "Electric cams", "کم‌های الکتریکی: زاویه‌ی روشن و خاموش شدن خروجی‌ها در چرخه‌ی دستگاه."],
+    [0, 610, 982, 43, "Compression blow", "دمیدن باد فشردن. کم الکتریکی: زاویه‌ی روشن (On)، خاموش (Off) و Cmp. (جبران). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [210, 690, 230, 60, "Login required", "قفل: برای تغییر مقدارها باید با سطح دسترسی مناسب وارد (Login) شوی."],
+    [0, 0, 110, 57, "<<", "فلش قبلی: رفتن به صفحه‌ی «Precompression».", "size-data-precompression"],
+    [890, 0, 110, 57, ">>", "فلش بعدی: رفتن به صفحه‌ی «Bags opening».", "size-data-bags-opening-1"],
+    [130, 0, 740, 57, "Bar conveyor / OHC", "عنوان صفحه و زاویه‌ی فعلی (Degrees) دستگاه. فلش‌های << و >> برای رفتن به صفحه قبل و بعد."],
+    [20, 64, 250, 50, "SAVE DATA", "ذخیره اطلاعات: مقدارهای وارد‌شده را برای این سایز در پنل ذخیره می‌کند."],
+    [724, 64, 255, 50, "ACTIVATION SIZE", "فعال‌سازی سایز: مقدارهای این سایز را روی دستگاه اعمال می‌کند."],
+    [20, 128, 400, 70, "STORED SIZE", "سایز ذخیره‌شده: نام سایزی که مقدارهای ستون خاکستری مال آن است."],
+    [580, 128, 410, 70, "WORKING SIZE", "سایز در حال کار: سایزی که الان روی دستگاه فعال است."],
+    [0, 690, 203, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "size-data-general-parameters": { title: "General parameters", image: "images/SIZE DATA GENERAL PARAMETERS", buttons: [
+    [210, 690, 230, 60, "Login required", "قفل: برای تغییر مقدارها باید با سطح دسترسی مناسب وارد (Login) شوی."],
+    [0, 0, 110, 57, "<<", "فلش قبلی: رفتن به صفحه‌ی قبلی پارامترها (این اولین صفحه است)."],
+    [890, 0, 110, 57, ">>", "فلش بعدی: رفتن به صفحه‌ی «Precompression».", "size-data-precompression"],
+    [130, 0, 740, 57, "General parameters", "عنوان صفحه و زاویه‌ی فعلی (Degrees) دستگاه. فلش‌های << و >> برای رفتن به صفحه قبل و بعد."],
+    [20, 64, 250, 50, "SAVE DATA", "ذخیره اطلاعات: مقدارهای وارد‌شده را برای این سایز در پنل ذخیره می‌کند."],
+    [724, 64, 255, 50, "ACTIVATION SIZE", "فعال‌سازی سایز: مقدارهای این سایز را روی دستگاه اعمال می‌کند."],
+    [20, 128, 400, 70, "STORED SIZE", "سایز ذخیره‌شده: نام سایزی که مقدارهای ستون خاکستری مال آن است."],
+    [580, 128, 410, 70, "WORKING SIZE", "سایز در حال کار: سایزی که الان روی دستگاه فعال است."],
+    [0, 208, 672, 46, "1.1 Product length (mm)", "طول محصول بر حسب میلی‌متر."],
+    [0, 258, 672, 46, "1.2 Rows number", "تعداد ردیف‌ها."],
+    [0, 308, 672, 46, "1.3 Product for row (pcs)", "تعداد محصول در هر ردیف."],
+    [0, 358, 672, 46, "1.4 Bagger minimum speed (Ppm)", "حداقل سرعت بگر (بسته در دقیقه)."],
+    [0, 408, 672, 46, "1.5 Bagger maximum speed (Ppm)", "حداکثر سرعت بگر (بسته در دقیقه)."],
+    [706, 208, 128, 246, "STORED value", "ستون مقدار ذخیره‌شده برای این سایز (در حافظه پنل)."],
+    [838, 208, 112, 246, "WORKING value", "ستون مقدار در حال کار روی دستگاه."],
+    [0, 573, 408, 48, "Stop in phase", "کَم الکتریکی توقف در فاز (Electric cams): زاویه‌ی روشن و خاموش."],
+    [418, 573, 192, 48, "Stored On / Off", "زاویه‌ی روشن و خاموش ذخیره‌شده."],
+    [714, 573, 192, 48, "Working On / Off", "زاویه‌ی روشن و خاموش در حال کار."],
+    [0, 690, 203, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "size-data-precompression": { title: "Precompression", image: "images/SIZE DATA PRECOMPRESSION", buttons: [
+    [0, 208, 950, 46, "2.1 Pre-compression opening (mm)", "باز بودن پیش‌فشردن (میلی‌متر). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 258, 950, 46, "2.2 Pre-compression pre-opening (mm)", "پیش‌بازشدن پیش‌فشردن (میلی‌متر). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 308, 950, 46, "2.3 DS pre-compr. opening offset (mm)", "آفست باز شدن پیش‌فشردن سمت DS (میلی‌متر). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 358, 950, 46, "2.4 OS pre-compr. opening offset (mm)", "آفست باز شدن پیش‌فشردن سمت OS (میلی‌متر). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [210, 690, 230, 60, "Login required", "قفل: برای تغییر مقدارها باید با سطح دسترسی مناسب وارد (Login) شوی."],
+    [0, 0, 110, 57, "<<", "فلش قبلی: رفتن به صفحه‌ی «General parameters».", "size-data-general-parameters"],
+    [890, 0, 110, 57, ">>", "فلش بعدی: رفتن به صفحه‌ی «Bar conveyor / OHC».", "size-data-bar-conveyor-ohc"],
+    [130, 0, 740, 57, "Precompression", "عنوان صفحه و زاویه‌ی فعلی (Degrees) دستگاه. فلش‌های << و >> برای رفتن به صفحه قبل و بعد."],
+    [20, 64, 250, 50, "SAVE DATA", "ذخیره اطلاعات: مقدارهای وارد‌شده را برای این سایز در پنل ذخیره می‌کند."],
+    [724, 64, 255, 50, "ACTIVATION SIZE", "فعال‌سازی سایز: مقدارهای این سایز را روی دستگاه اعمال می‌کند."],
+    [20, 128, 400, 70, "STORED SIZE", "سایز ذخیره‌شده: نام سایزی که مقدارهای ستون خاکستری مال آن است."],
+    [580, 128, 410, 70, "WORKING SIZE", "سایز در حال کار: سایزی که الان روی دستگاه فعال است."],
+    [0, 690, 203, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "size-data-sealing-parameters-1": { title: "Sealing parameters", image: "images/SIZE DATA SEALING PARAMETERS 1", buttons: [
+    [0, 208, 950, 47, "5.1 Sealing time (ms)", "زمان دوخت (میلی‌ثانیه). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 259, 950, 46, "5.2 Welding jaws pressure (%)", "فشار فک‌های جوش (درصد). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 310, 950, 46, "5.3 Low sealer open posit. offset (mm)", "آفست موقعیت باز شدن سیلر پایین (میلی‌متر). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 360, 950, 45, "5.4 Upper sealing bar open posit. (mm)", "موقعیت باز بودن میله‌ی سیل بالا (میلی‌متر). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 409, 950, 45, "5.5 Seal position (mm)", "موقعیت سیل (میلی‌متر). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 460, 950, 45, "5.6 Upper sealer temperature", "دمای تنظیمی سیلر بالا. (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 510, 800, 28, "Upper sealer actual temperature", "دمای واقعی سیلر بالا (فقط نمایش)."],
+    [0, 543, 950, 46, "5.7 Lower sealer temperature", "دمای تنظیمی سیلر پایین. (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 594, 800, 28, "Lower sealer actual temperature", "دمای واقعی سیلر پایین (فقط نمایش)."],
+    [263, 634, 405, 51, "Sealing parameters (down arrow)", "فلش پایین: ادامه‌ی پارامترهای سیلینگ (صفحه‌ی ۲).", "size-data-sealing-parameters-2"],
+    [210, 690, 230, 60, "Login required", "قفل: برای تغییر مقدارها باید با سطح دسترسی مناسب وارد (Login) شوی."],
+    [0, 0, 110, 57, "<<", "فلش قبلی: رفتن به صفحه‌ی «Bags opening (2)».", "size-data-bags-opening-2"],
+    [890, 0, 110, 57, ">>", "فلش بعدی: رفتن به صفحه‌ی «Sealing parameters (2)».", "size-data-sealing-parameters-2"],
+    [130, 0, 740, 57, "Sealing parameters", "عنوان صفحه و زاویه‌ی فعلی (Degrees) دستگاه. فلش‌های << و >> برای رفتن به صفحه قبل و بعد."],
+    [20, 64, 250, 50, "SAVE DATA", "ذخیره اطلاعات: مقدارهای وارد‌شده را برای این سایز در پنل ذخیره می‌کند."],
+    [724, 64, 255, 50, "ACTIVATION SIZE", "فعال‌سازی سایز: مقدارهای این سایز را روی دستگاه اعمال می‌کند."],
+    [20, 128, 400, 70, "STORED SIZE", "سایز ذخیره‌شده: نام سایزی که مقدارهای ستون خاکستری مال آن است."],
+    [580, 128, 410, 70, "WORKING SIZE", "سایز در حال کار: سایزی که الان روی دستگاه فعال است."],
+    [0, 690, 203, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "size-data-sealing-parameters-2": { title: "Sealing parameters (2)", image: "images/SIZE DATA SEALING PARAMETERS 2", buttons: [
+    [0, 210, 990, 32, "Electric cams header", "کم‌های الکتریکی؛ ستون‌ها: On، Off و Cmp. (میلی‌ثانیه یا درجه)؛ سمت چپ ذخیره‌شده، سمت راست در حال کار."],
+    [0, 251, 990, 45, "Scrap blade", "تیغه‌ی ضایعات: زمان روشن و خاموش (میلی‌ثانیه) و Cmp. (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 300, 990, 44, "Scrap cut duration (°)", "مدت برش ضایعات (درجه). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 389, 990, 98, "Scrap suction", "مکش ضایعات: زمان روشن (میلی‌ثانیه)، زاویه‌ی خاموش و Cmp. (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 520, 990, 48, "Upper sealer suction", "مکش سیلر بالا: زاویه‌ی روشن و خاموش و Cmp. (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 574, 560, 42, "Sealer closed (°)", "زاویه‌ی بسته شدن سیلر (درجه)؛ فقط نمایش."],
+    [303, 625, 405, 55, "Sealing parameters (up arrow)", "فلش بالا: برگشت به صفحه‌ی ۱ پارامترهای سیلینگ.", "size-data-sealing-parameters-1"],
+    [210, 690, 230, 60, "Login required", "قفل: برای تغییر مقدارها باید با سطح دسترسی مناسب وارد (Login) شوی."],
+    [0, 0, 110, 57, "<<", "فلش قبلی: رفتن به صفحه‌ی «Sealing parameters».", "size-data-sealing-parameters-1"],
+    [890, 0, 110, 57, ">>", "فلش بعدی: رفتن به صفحه‌ی «Side folder - Pack stopper».", "size-data-side-folder-pack-stopper"],
+    [130, 0, 740, 57, "Sealing parameters (2)", "عنوان صفحه و زاویه‌ی فعلی (Degrees) دستگاه. فلش‌های << و >> برای رفتن به صفحه قبل و بعد."],
+    [20, 64, 250, 50, "SAVE DATA", "ذخیره اطلاعات: مقدارهای وارد‌شده را برای این سایز در پنل ذخیره می‌کند."],
+    [724, 64, 255, 50, "ACTIVATION SIZE", "فعال‌سازی سایز: مقدارهای این سایز را روی دستگاه اعمال می‌کند."],
+    [20, 128, 400, 70, "STORED SIZE", "سایز ذخیره‌شده: نام سایزی که مقدارهای ستون خاکستری مال آن است."],
+    [580, 128, 410, 70, "WORKING SIZE", "سایز در حال کار: سایزی که الان روی دستگاه فعال است."],
+    [0, 690, 203, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "size-data-side-folder-pack-stopper": { title: "Side folder - Pack stopper", image: "images/SIZE DATA SIDE FOLDER PACK STOPPER", buttons: [
+    [0, 208, 950, 47, "6.1 Side folder start offset (°)", "آفست شروع حرکت تاکننده‌ی کناری (درجه). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 259, 950, 46, "6.2 Side folder open position (mm)", "موقعیت باز بودن تاکننده‌ی کناری (میلی‌متر). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 310, 950, 46, "6.3 Side folder stroke offset (mm)", "آفست کورس تاکننده‌ی کناری (میلی‌متر). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 415, 409, 29, "Electric cams", "کم‌های الکتریکی: زاویه‌ی روشن و خاموش شدن خروجی‌ها در چرخه‌ی دستگاه."],
+    [0, 449, 990, 48, "Side folder blow", "باد تاکننده‌ی کناری. کم الکتریکی: زاویه‌ی روشن (On)، خاموش (Off) و Cmp. (جبران). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 500, 990, 48, "Upper pack stopper", "جلوگیر بالایی بسته. کم الکتریکی: زاویه‌ی روشن (On)، خاموش (Off) و Cmp. (جبران). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [0, 552, 990, 48, "Lateral pack stopper", "جلوگیر کناری بسته. کم الکتریکی: زاویه‌ی روشن (On)، خاموش (Off) و Cmp. (جبران). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [210, 690, 230, 60, "Login required", "قفل: برای تغییر مقدارها باید با سطح دسترسی مناسب وارد (Login) شوی."],
+    [0, 0, 110, 57, "<<", "فلش قبلی: رفتن به صفحه‌ی «Sealing parameters (2)».", "size-data-sealing-parameters-2"],
+    [890, 0, 110, 57, ">>", "فلش بعدی: رفتن به صفحه‌ی «Turning».", "size-data-turning"],
+    [130, 0, 740, 57, "Side folder - Pack stopper", "عنوان صفحه و زاویه‌ی فعلی (Degrees) دستگاه. فلش‌های << و >> برای رفتن به صفحه قبل و بعد."],
+    [20, 64, 250, 50, "SAVE DATA", "ذخیره اطلاعات: مقدارهای وارد‌شده را برای این سایز در پنل ذخیره می‌کند."],
+    [724, 64, 255, 50, "ACTIVATION SIZE", "فعال‌سازی سایز: مقدارهای این سایز را روی دستگاه اعمال می‌کند."],
+    [20, 128, 400, 70, "STORED SIZE", "سایز ذخیره‌شده: نام سایزی که مقدارهای ستون خاکستری مال آن است."],
+    [580, 128, 410, 70, "WORKING SIZE", "سایز در حال کار: سایزی که الان روی دستگاه فعال است."],
+    [0, 690, 203, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "size-data-turning": { title: "Turning", image: "images/SIZE DATA TURNING", buttons: [
+    [3, 259, 539, 186, "Turning unit", "راهنمای واحد چرخش: ۰ = خاموش، ۱ = فقط ردیف اول، ۲ = فقط ردیف دوم، ۳ = همه‌ی ردیف‌ها."],
+    [585, 259, 107, 46, "Turning mode value", "حالت چرخش: یکی از اعداد ۰ تا ۳ را وارد کن (۳ = همه‌ی ردیف‌ها). (خاکستری = ذخیره‌شده، آبی = در حال کار)"],
+    [722, 259, 222, 47, "TURN ALL ROWS", "نمایش حالت انتخاب‌شده‌ی چرخش؛ متنش با عدد حالت هماهنگ است."],
+    [210, 690, 230, 60, "Login required", "قفل: برای تغییر مقدارها باید با سطح دسترسی مناسب وارد (Login) شوی."],
+    [0, 0, 110, 57, "<<", "فلش قبلی: رفتن به صفحه‌ی «Side folder - Pack stopper».", "size-data-side-folder-pack-stopper"],
+    [890, 0, 110, 57, ">>", "فلش بعدی: رفتن به صفحه‌ی بعدی پارامترها (این آخرین صفحه است)."],
+    [130, 0, 740, 57, "Turning", "عنوان صفحه و زاویه‌ی فعلی (Degrees) دستگاه. فلش‌های << و >> برای رفتن به صفحه قبل و بعد."],
+    [20, 64, 250, 50, "SAVE DATA", "ذخیره اطلاعات: مقدارهای وارد‌شده را برای این سایز در پنل ذخیره می‌کند."],
+    [724, 64, 255, 50, "ACTIVATION SIZE", "فعال‌سازی سایز: مقدارهای این سایز را روی دستگاه اعمال می‌کند."],
+    [20, 128, 400, 70, "STORED SIZE", "سایز ذخیره‌شده: نام سایزی که مقدارهای ستون خاکستری مال آن است."],
+    [580, 128, 410, 70, "WORKING SIZE", "سایز در حال کار: سایزی که الان روی دستگاه فعال است."],
+    [0, 690, 203, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "size-format-management": { title: "Size Format Management", image: "images/SIZE FORMAT MANAGEMENT", buttons: [
+    [0, 0, 1000, 54, "Size", "عنوان صفحه: مدیریت سایزها (فرمت‌ها)."],
+    [46, 73, 756, 48, "WORKING SIZE", "سایز در حال کار: نام سایزی که الان روی دستگاه فعال است."],
+    [843, 73, 153, 74, "Edit name", "ویرایش نام: نام سایز انتخاب‌شده را تغییر می‌دهد."],
+    [14, 140, 619, 437, "Size list", "فهرست سایزهای ذخیره‌شده؛ ردیف سفید سایز در حال کار است. با لمس یک ردیف آن را انتخاب کن."],
+    [642, 147, 63, 61, "Up arrow", "فلش بالا: حرکت در فهرست سایزها به بالا."],
+    [642, 223, 63, 60, "Down arrow", "فلش پایین: حرکت در فهرست سایزها به پایین."],
+    [792, 293, 144, 67, "Copy from PLC", "کپی از PLC: سایز در حال کار روی دستگاه را روی سایز انتخاب‌شده کپی می‌کند و مقدارهای آن را عوض می‌کند."],
+    [786, 393, 150, 69, "Delete recipe", "حذف رسپی: سایز انتخاب‌شده را از فهرست پاک می‌کند؛ با دقت بزن."],
+    [792, 606, 144, 64, "New recipe", "رسپی جدید: یک سایز جدید می‌سازد که مقدارهایش از سایز انتخاب‌شده کپی می‌شود."],
+    [17, 589, 216, 72, "Formats backup", "پشتیبان‌گیری از فرمت‌ها: از همه‌ی سایزها نسخه‌ی پشتیبان می‌گیرد."],
+    [210, 690, 230, 60, "Login required", "قفل: برای تغییر مقدارها باید با سطح دسترسی مناسب وارد (Login) شوی."],
+    [0, 690, 150, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "size-selection": { title: "Size selection", image: "images/SIZE SELECTION", buttons: [
+    [3, 5, 229, 68, "General parameters", "پارامترهای عمومی سایز: طول محصول، تعداد ردیف، تعداد محصول در هر ردیف، سرعت کمینه و بیشینه‌ی بگر و توقف در فاز.", "size-data-general-parameters"],
+    [3, 83, 229, 68, "Precompression", "پارامترهای پیش‌فشردن (Precompression): بازشدن، پیش‌بازشدن و آفست‌های سمت DS و OS.", "size-data-precompression"],
+    [3, 161, 229, 70, "Compression / Bar conveyor", "پارامترهای فشردن و نوار نقاله (Bar conveyor / OHC): بازشدن و بسته‌شدن فشردن، بررسی آزاد بودن نوار نقاله، کم‌های الکتریکی.", "size-data-bar-conveyor-ohc"],
+    [3, 240, 229, 70, "Bag opener / Bags feeder", "پارامترهای باز کردن کیسه (Bags opening): ارتفاع بازکن‌ها، موقعیت جلو و عقب، گام تغذیه‌ی کیسه و کم‌های الکتریکی.", "size-data-bags-opening-1"],
+    [3, 318, 229, 68, "Sealing parameters", "پارامترهای سیلینگ (Sealing): زمان و فشار دوخت، موقعیت‌ها، دمای سیلرها، تیغه‌ی ضایعات و مکش‌ها.", "size-data-sealing-parameters-1"],
+    [3, 396, 229, 69, "Side folder", "پارامترهای تاکننده‌ی کناری و جلوگیرهای بسته (Side folder - Pack stopper).", "size-data-side-folder-pack-stopper"],
+    [3, 474, 229, 70, "Turning", "پارامتر واحد چرخش (Turning): خاموش یا چرخاندن ردیف اول، ردیف دوم یا همه‌ی ردیف‌ها.", "size-data-turning"],
+    [243, 101, 622, 446, "Size list", "فهرست سایزهای ذخیره‌شده. با لمس یک ردیف، آن سایز انتخاب می‌شود (ردیف سیاه = انتخاب‌شده)."],
+    [872, 101, 72, 182, "Scroll arrows", "فلش‌های بالا و پایین برای حرکت در فهرست سایزها."],
+    [234, 568, 532, 99, "WORKING SIZE", "سایز در حال کار: سایزی که الان روی دستگاه فعال است."],
+    [8, 597, 221, 70, "Format management", "مدیریت فرمت (سایز): ویرایش نام، کپی، حذف و ساخت سایز جدید.", "size-format-management"],
+    [771, 597, 221, 70, "SEND -->PLC", "ارسال سایز انتخاب‌شده به PLC تا روی دستگاه اعمال شود."],
+    [210, 690, 230, 60, "Login required", "قفل: برای تغییر مقدارها باید با سطح دسترسی مناسب وارد (Login) شوی."],
+    [0, 690, 203, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "valve-control-1": { title: "Valve control", image: "images/VALVE CONTROL 2", buttons: [
+    [482, 0, 200, 100, "Warning", "هشدار: تغییر یا حرکت دستی فقط وقتی مجاز است که STOP IMMEDIATE زده شده باشد."],
+    [13, 70, 459, 51, "MANUAL FUNCTIONS", "سرتیتر «عملکردهای دستی»: شامل Manual operations و Valve control."],
+    [13, 226, 459, 49, "SETTINGS", "سرتیتر «تنظیمات»: شامل Alarm ON."],
+    [13, 334, 459, 49, "DATA COLLECTIONS", "سرتیتر «جمع‌آوری داده‌ها»: شامل Product data."],
+    [13, 440, 459, 50, "DISPLAY", "سرتیتر «نمایش»: شامل I/O check، Panel function و Language."],
+    [490, 104, 505, 50, "Valve control", "عنوان صفحه: کنترل دستی شیرهای باد (صفحه‌ی ۱)."],
+    [490, 166, 505, 62, "Pre-compres. stopper", "شیر «جلوگیر پیش‌فشردن» (کد -K261510): با دکمه‌ی قرمز کنارش دستی روشن یا خاموش می‌شود."],
+    [490, 230, 505, 62, "Compression blow", "شیر «باد فشردن» (کد -K463110): با دکمه‌ی قرمز کنارش دستی روشن یا خاموش می‌شود."],
+    [490, 293, 505, 62, "Bags stoppage", "شیر «توقف‌دهنده‌ی کیسه» (کد -K351520): با دکمه‌ی قرمز کنارش دستی روشن یا خاموش می‌شود."],
+    [490, 358, 505, 62, "Bag openers blow", "شیر «باد بازکن‌های کیسه» (کد -K467110): با دکمه‌ی قرمز کنارش دستی روشن یا خاموش می‌شود."],
+    [490, 422, 505, 62, "Bag grippers", "شیر «گیره‌های کیسه» (کد -K468830/40): با دکمه‌ی قرمز کنارش دستی روشن یا خاموش می‌شود."],
+    [490, 487, 505, 62, "Suction arms suction", "شیر «مکش بازوهای مکنده» (کد -K468810/20): با دکمه‌ی قرمز کنارش دستی روشن یا خاموش می‌شود."],
+    [490, 552, 505, 62, "Package guides", "شیر «گایدهای بسته» (کد -K469610/20): با دکمه‌ی قرمز کنارش دستی روشن یا خاموش می‌شود."],
+    [210, 690, 230, 60, "Login required", "قفل: برای تغییر مقدارها باید با سطح دسترسی مناسب وارد (Login) شوی."],
+    [12, 10, 461, 55, "Menu up arrow", "فلش بالای منو: برگشت به منوی تنظیمات (Settings).", "settings-menu"],
+    [14, 121, 459, 50, "Manual operations", "عملیات دستی: حرکت و تست دستی قسمت‌ها (ترمز بازوها، هم‌ترازی سیلرها، تغذیه‌کننده‌ی کیسه، تست لامپ، ریست شیر اصلی).", "manual-operations-1"],
+    [14, 173, 459, 50, "Valve control", "کنترل شیرها: روشن و خاموش کردن دستی شیرهای باد دستگاه.", "valve-control-1"],
+    [14, 277, 459, 50, "Alarm ON", "آلارم‌های فعال: لیست آلارم‌هایی که همین الان فعال‌اند (با فلش، تاریخچه‌ی آلارم‌ها).", "alarm-on"],
+    [14, 384, 459, 50, "Product. data", "اطلاعات تولید: تعداد سیکل، ساعت کار، تعداد بسته‌ها و سرعت بگر.", "product-data"],
+    [14, 491, 459, 50, "I/O check", "بررسی ورودی/خروجی‌ها: وضعیت لحظه‌ای ورودی و خروجی‌های تابلو (قرمز = فعال، آبی = غیرفعال).", "io-check-input-cc41"],
+    [14, 544, 459, 50, "Panel function", "عملکردهای پنل: پشتیبان‌گیری و بازگردانی اطلاعات، ورود کاربر و تنظیم ساعت.", "panel-function"],
+    [14, 596, 459, 50, "Language", "زبان: انتخاب زبان پنل (انگلیسی یا ایتالیایی).", "language"],
+    [690, 600, 100, 50, "Down arrow", "فلش پایین: رفتن به ادامه‌ی شیرها (صفحه‌ی ۲).", "valve-control-2"],
+    [0, 690, 203, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+  "valve-control-2": { title: "Valve control (2)", image: "images/VALVE CONTROL 1", buttons: [
+    [482, 0, 200, 100, "Warning", "هشدار: تغییر یا حرکت دستی فقط وقتی مجاز است که STOP IMMEDIATE زده شده باشد."],
+    [13, 70, 459, 51, "MANUAL FUNCTIONS", "سرتیتر «عملکردهای دستی»: شامل Manual operations و Valve control."],
+    [13, 226, 459, 49, "SETTINGS", "سرتیتر «تنظیمات»: شامل Alarm ON."],
+    [13, 334, 459, 49, "DATA COLLECTIONS", "سرتیتر «جمع‌آوری داده‌ها»: شامل Product data."],
+    [13, 440, 459, 50, "DISPLAY", "سرتیتر «نمایش»: شامل I/O check، Panel function و Language."],
+    [490, 104, 505, 50, "Valve control", "عنوان صفحه: کنترل دستی شیرهای باد (صفحه‌ی ۲)."],
+    [490, 166, 505, 62, "Sealing bar suction", "شیر «مکش میله‌ی سیل» (کد -K470610): با دکمه‌ی قرمز کنارش دستی روشن یا خاموش می‌شود."],
+    [490, 230, 505, 62, "Scrap suction", "شیر «مکش ضایعات» (کد -K351510): با دکمه‌ی قرمز کنارش دستی روشن یا خاموش می‌شود."],
+    [490, 293, 505, 62, "Scrap blade", "شیر «تیغه‌ی ضایعات» (کد -K351520): با دکمه‌ی قرمز کنارش دستی روشن یا خاموش می‌شود."],
+    [490, 358, 505, 62, "Side folder blow", "شیر «باد تاکننده‌ی کناری» (کد -K474220): با دکمه‌ی قرمز کنارش دستی روشن یا خاموش می‌شود."],
+    [490, 422, 505, 62, "Lateral pack stopper", "شیر «جلوگیر کناری بسته» (کد -K475010): با دکمه‌ی قرمز کنارش دستی روشن یا خاموش می‌شود."],
+    [490, 487, 505, 62, "Up package stoppage", "شیر «توقف‌دهنده‌ی بالایی بسته» (کد -K475020): با دکمه‌ی قرمز کنارش دستی روشن یا خاموش می‌شود."],
+    [490, 552, 505, 62, "Bags feeder suction", "شیر «مکش تغذیه‌کننده‌ی کیسه» (کد -K351510): با دکمه‌ی قرمز کنارش دستی روشن یا خاموش می‌شود."],
+    [210, 690, 230, 60, "Login required", "قفل: برای تغییر مقدارها باید با سطح دسترسی مناسب وارد (Login) شوی."],
+    [12, 10, 461, 55, "Menu up arrow", "فلش بالای منو: برگشت به منوی تنظیمات (Settings).", "settings-menu"],
+    [14, 121, 459, 50, "Manual operations", "عملیات دستی: حرکت و تست دستی قسمت‌ها (ترمز بازوها، هم‌ترازی سیلرها، تغذیه‌کننده‌ی کیسه، تست لامپ، ریست شیر اصلی).", "manual-operations-1"],
+    [14, 173, 459, 50, "Valve control", "کنترل شیرها: روشن و خاموش کردن دستی شیرهای باد دستگاه.", "valve-control-1"],
+    [14, 277, 459, 50, "Alarm ON", "آلارم‌های فعال: لیست آلارم‌هایی که همین الان فعال‌اند (با فلش، تاریخچه‌ی آلارم‌ها).", "alarm-on"],
+    [14, 384, 459, 50, "Product. data", "اطلاعات تولید: تعداد سیکل، ساعت کار، تعداد بسته‌ها و سرعت بگر.", "product-data"],
+    [14, 491, 459, 50, "I/O check", "بررسی ورودی/خروجی‌ها: وضعیت لحظه‌ای ورودی و خروجی‌های تابلو (قرمز = فعال، آبی = غیرفعال).", "io-check-input-cc41"],
+    [14, 544, 459, 50, "Panel function", "عملکردهای پنل: پشتیبان‌گیری و بازگردانی اطلاعات، ورود کاربر و تنظیم ساعت.", "panel-function"],
+    [14, 596, 459, 50, "Language", "زبان: انتخاب زبان پنل (انگلیسی یا ایتالیایی).", "language"],
+    [690, 45, 100, 50, "Up arrow", "فلش بالا: رفتن به بخش قبلی شیرها (صفحه‌ی ۱).", "valve-control-1"],
+    [0, 690, 203, 60, "Back", "دکمه بازگشت به صفحه قبل", "$back"],
+    [450, 690, 110, 60, "Home button", "دکمه خانه (دایره): برگشت به لایوت.", "layout"],
+    [880, 690, 120, 60, "Square button", "دکمه مربع: رفتن به منوی اصلی.", "main-menu"],
+  ]},
+};
+Object.assign(PAGES, EXTRA);
+
+const panel = document.getElementById("panel"), panelImage = document.getElementById("panelImage"), tip = document.getElementById("hmiTooltip");
+const ttTitle = document.getElementById("ttTitle"), ttText = document.getElementById("ttText"), ttHint = document.getElementById("ttHint"), msg = document.getElementById("msg");
+let cur = "layout", hist = [], armed = null, ptype = "mouse", p1 = null;
+/* لمس: نگه داشتن انگشت (بیشتر از LONG_MS) فقط توضیح را نشان می‌دهد؛ لمس کوتاه توضیح را نشان می‌دهد و بعد از AUTO_MS وارد صفحه می‌شود */
+const LONG_MS = 400, AUTO_MS = 600; let downT = 0, hideT = null, autoT = null, touching = false;
+
+function toast(t) { msg.textContent = t; msg.style.display = "block"; clearTimeout(toast.t); toast.t = setTimeout(() => msg.style.display = "none", 4000); }
+function hideTip() { tip.style.display = "none"; }
+function showTip(z, x, y, hint, rect) {
+  ttTitle.textContent = z[4]; ttText.textContent = z[5]; ttHint.textContent = hint || "";
+  tip.classList.toggle("wide", z[5].length > 70);
+  tip.style.display = "block";
+  const tw = tip.offsetWidth, th = tip.offsetHeight, vw = innerWidth, vh = innerHeight;
+  let l, t;
+  if (rect) {   /* لمس: توضیح بالای دکمه می‌آید تا زیر انگشت نماند */
+    l = (rect.left + rect.right) / 2 - tw / 2; t = rect.top - th - 8;
+    if (t < 5) t = rect.bottom + 8;
+  } else {
+    l = x + 14; t = y + 14;
+    if (l + tw > vw - 5) l = x - tw - 14;
+  }
+  if (t + th > vh - 5) t = Math.max(5, vh - th - 5);
+  tip.style.left = Math.max(5, Math.min(l, vw - tw - 5)) + "px"; tip.style.top = Math.max(5, t) + "px";
+}
+/* اسم عکس بدون پسوند نوشته می‌شود (مثل "images/MAIN MENU"). کد خودش پسوندهای png و jpg را امتحان می‌کند.
+   می‌شود چند اسم جایگزین هم داد: ["images/LAYOUT", "images/LAYOTE"]. حروف بزرگ و کوچک مهم‌اند. */
+const EXTS = [".jpg", ".png", ".jpeg", ".JPG", ".PNG", ".JPEG"];
+function loadImage(p) {
+  const cv = y => { const i = y.lastIndexOf("/") + 1; return [y.slice(0, i) + y.slice(i).toUpperCase(), y.slice(0, i) + y.slice(i).toLowerCase()]; };
+  const bases = [].concat(p.image).flatMap(x => { const v = [x, x.replace(/^images\//, "image/"), x.replace(/^images\//, "")]; return v.concat(...v.map(cv)); }), list = [];
+  bases.forEach(b => EXTS.forEach(e => list.push(/\.(png|jpe?g)$/i.test(b) ? b : b + e)));
+  let i = 0;
+  const next = () => { if (i >= list.length) { toast("عکس پیدا نشد: " + bases[0] + " (اسم فایل، پسوند و پوشه را چک کن؛ حروف بزرگ و کوچک مهم‌اند)"); return; } panelImage.src = list[i++]; };
+  panelImage.onerror = next; next();
+}
+function render(key) {
+  const p = PAGES[key]; cur = key; crop = null; armed = null; clearTimeout(autoT); hideLabels(); hideTip(); p1 = null; if (clockEl) { clockEl.remove(); clockEl = null; }
+  panel.querySelectorAll("button.z").forEach(b => b.remove());
+  loadImage(p);
+  p.buttons.forEach(z => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "z" + (z[6] && (z[6] === "$back" || PAGES[z[6]]) ? " go" : "");
+    b.style.left = z[0] + "px"; b.style.top = z[1] + "px"; b.style.width = z[2] + "px"; b.style.height = z[3] + "px";
+    b.setAttribute("aria-label", z[4] + ": " + z[5]);
+    b.addEventListener("pointerdown", e => {
+      ptype = e.pointerType; downT = performance.now();
+      if (ptype !== "mouse") { touching = true; clearTimeout(hideT); showTip(z, 0, 0, "", b.getBoundingClientRect()); }
+    });
+    b.addEventListener("pointerenter", e => { if (e.pointerType === "mouse") showTip(z, e.clientX, e.clientY); });
+    b.addEventListener("pointermove", e => { if (e.pointerType === "mouse") showTip(z, e.clientX, e.clientY); });
+    b.addEventListener("pointerleave", e => { if (e.pointerType === "mouse") hideTip(); });
+    b.addEventListener("click", e => {
+      hideLabels();
+      const go = z[6], ok = go === "$back" || (go && PAGES[go]);
+      if (ptype === "touch" || ptype === "pen") {
+        clearTimeout(autoT);
+        if (performance.now() - downT >= LONG_MS) { armed = null; return; }   /* نگه داشتن = فقط توضیح */
+        if (armed !== z) {
+          armed = z;
+          if (ok) autoT = setTimeout(() => { if (armed === z) { armed = null; navigate(go); } }, AUTO_MS);
+          return;
+        }
+        armed = null;
+      }
+      if (ok) navigate(go);
+    });
+    panel.append(b);
+  });
+  fitPanel();
+}
+function navigate(key) {
+  if (key === "$back") { if (hist.length) render(hist.pop()); return; }
+  if (!PAGES[key]) return;
+  hist.push(cur); if (hist.length > 50) hist.shift();
+  render(key);
+}
+
+/* ===== لمس قسمت خالی: معنی همه قسمت‌های صفحه یک‌جا نشان داده می‌شود (دوباره لمس یا ۶ ثانیه = بسته شدن) ===== */
+let labelsTimer = null;
+function hideLabels() { clearTimeout(labelsTimer); panel.querySelectorAll(".hmi-label").forEach(e => e.remove()); panel.classList.remove("labels-on"); }
+function shortText(z) {
+  let t = z[5]; const i = t.indexOf(":");
+  if (i > 1) {
+    const pre = t.slice(0, i).trim();
+    if (/^عنوان (صفحه|پنل)$/.test(pre) || /^دکمه (مربع|خانه)/.test(pre)) t = t.slice(i + 1).trim();   /* عنوان و دکمه‌های پایین: خود توضیح نشان داده می‌شود */
+    else if (pre.length <= 32) return pre;
+  }
+  return t.split(/[.؛]/)[0].trim();   /* کامل، بدون نقطه‌چین */
+}
+function addLabel(x, y, w, h, text) {
+  if (!text || w < 6 || h < 6) return;
+  const MINW = 64, MINH = 22;
+  if (w < MINW) { x -= (MINW - w) / 2; w = MINW; }
+  if (h < MINH) { y -= (MINH - h) / 2; h = MINH; }
+  const d = document.createElement("div"); d.className = "hmi-label";
+  d.style.left = x + "px"; d.style.top = y + "px"; d.style.width = w + "px"; d.style.height = h + "px";
+  d.textContent = text; panel.appendChild(d);
+  let fs = 16; d.style.fontSize = fs + "px";
+  while (fs > 10 && (d.scrollHeight > d.clientHeight + 1 || d.scrollWidth > d.clientWidth + 1)) { fs--; d.style.fontSize = fs + "px"; }
+  if (d.scrollWidth > d.clientWidth + 1) { const nw = d.scrollWidth + 8; d.style.left = (x - (nw - w) / 2) + "px"; d.style.width = nw + "px"; }
+  if (d.scrollHeight > d.clientHeight + 1) { const nh = d.scrollHeight + 2; d.style.top = (y - (nh - h) / 2) + "px"; d.style.height = nh + "px"; }
+}
+function fitLabelFont(e) {
+  e.style.overflow = "hidden";
+  let fs = parseFloat(e.style.fontSize) || 14;
+  while (fs > 8 && (e.scrollHeight > e.clientHeight + 1 || e.scrollWidth > e.clientWidth + 1)) { fs -= 0.5; e.style.fontSize = fs + "px"; }
+  if (e.scrollHeight > e.clientHeight + 1 || e.scrollWidth > e.clientWidth + 1) e.style.overflow = "visible";
+}
+function resolveLabelOverlaps() {
+  const els = [...panel.querySelectorAll(".hmi-label")];
+  if (els.length < 2) return;
+  const W = panel.offsetWidth, H = panel.offsetHeight;
+  const R = els.map(e => ({ e, x: e.offsetLeft, y: e.offsetTop, w: e.offsetWidth, h: e.offsetHeight }));
+  const ovl = (a, b) => [Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x), Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y)];
+  R.forEach(a => {   /* کادر بزرگی که چند کادر کوچک در آن است: کوچک و وسط‌چین می‌شود */
+    if (a.w < 260 || a.h < 60) return;
+    const inside = R.filter(b => { if (b === a) return false; const [ox, oy] = ovl(a, b); return ox > 0 && oy > 0 && ox * oy >= 0.1 * b.w * b.h && a.w * a.h > 4 * b.w * b.h; }).length;
+    if (!inside) return;
+    const cx = a.x + a.w / 2, cy = a.y + a.h / 2, nw = Math.min(a.w, 260);
+    a.e.style.width = nw + "px"; a.e.style.height = "auto";
+    a.w = a.e.offsetWidth; a.h = a.e.offsetHeight; a.x = cx - a.w / 2; a.y = cy - a.h / 2;
+  });
+  for (let it = 0; it < 400; it++) {
+    let moved = false;
+    for (let i = 0; i < R.length; i++) for (let j = i + 1; j < R.length; j++) {
+      const a = R[i], b = R[j], [ox, oy] = ovl(a, b);
+      if (ox <= 0.5 || oy <= 0.5) continue;
+      moved = true;
+      if (oy <= ox) { const k = oy / 2 + 0.6, up = a.y + a.h / 2 <= b.y + b.h / 2; if (up) { a.y -= k; b.y += k; } else { a.y += k; b.y -= k; } }
+      else { const k = ox / 2 + 0.6, left = a.x + a.w / 2 <= b.x + b.w / 2; if (left) { a.x -= k; b.x += k; } else { a.x += k; b.x -= k; } }
+    }
+    if (W && H) R.forEach(r => { r.x = Math.max(0, Math.min(r.x, W - r.w)); r.y = Math.max(0, Math.min(r.y, H - r.h)); });
+    if (!moved) break;
+  }
+  R.forEach(r => { r.e.style.left = r.x + "px"; r.e.style.top = r.y + "px"; r.e.style.width = r.w + "px"; r.e.style.height = r.h + "px"; fitLabelFont(r.e); });
+}
+function showAllLabels() {
+  hideLabels(); hideTip();
+  (PAGES[cur].buttons).forEach(z => addLabel(z[0], z[1], z[2], z[3], shortText(z)));
+  resolveLabelOverlaps();
+  panel.classList.add("labels-on");
+  labelsTimer = setTimeout(hideLabels, 6000);
+}
+panel.addEventListener("pointerup", e => {
+  if (PICK || CROPSET || (e.pointerType === "mouse" && e.button !== 0) || e.target.closest("button.z")) return;
+  if (panel.querySelector(".hmi-label")) hideLabels(); else showAllLabels();
+});
+
+/* ===== ساعت زنده: روی عکسِ ساعت می‌نشیند و هر ثانیه با ساعت واقعی به‌روز می‌شود ===== */
+const CLOCKS = { "layout": [618, 82, 170, 40, 32, "time", "#fff", 601] };   /* آخرین عدد: ستون خالی عکس که پشت ساعت کشیده می‌شود */
+let clockEl = null;
+const p2 = n => String(n).padStart(2, "0");
+function clockText(kind) {
+  const d = new Date(), yr = d.getFullYear();
+  if (kind === "time") return p2(d.getHours()) + ":" + p2(d.getMinutes()) + ":" + p2(d.getSeconds());
+  const date = p2(d.getDate()) + "/" + p2(d.getMonth() + 1) + "/" + (kind === "long" ? yr : String(yr).slice(2));
+  const time = p2(d.getHours()) + ":" + p2(d.getMinutes()) + ":" + p2(d.getSeconds());
+  return kind === "long" ? date + "   " + d.toLocaleDateString("en-GB", { weekday: "short" }) + "   " + time : date + " " + time;
+}
+function coverFor(c) {
+  /* پشت ساعت را از رنگ‌های واقعی دو طرف ساعت در همین عکس می‌سازد (هر ردیف یک گرادیان)، تا هیچ رقم قدیمی دیده نشود */
+  try {
+    const k = panelImage.naturalWidth / 1000, pad = 4;
+    const x0 = Math.max(0, Math.round((c[0] - pad - 4) * k)), x1 = Math.min(panelImage.naturalWidth - 3, Math.round((c[0] + c[2] + pad + 2) * k));
+    const y0 = Math.round((c[1] - pad) * k), h = Math.round((c[3] + 2 * pad) * k);
+    const cv = document.createElement("canvas"); cv.width = panelImage.naturalWidth; cv.height = h; const cx = cv.getContext("2d");
+    cx.drawImage(panelImage, 0, y0, panelImage.naturalWidth, h, 0, 0, panelImage.naturalWidth, h);
+    const L = cx.getImageData(x0, 0, 3, h).data, R = cx.getImageData(x1, 0, 3, h).data;
+    const o = document.createElement("canvas"); o.width = 64; o.height = h; const ox = o.getContext("2d");
+    for (let y = 0; y < h; y++) {
+      let a = [0, 0, 0], b = [0, 0, 0];
+      for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) { a[j] += L[(y * 3 + i) * 4 + j] / 3; b[j] += R[(y * 3 + i) * 4 + j] / 3; }
+      const g = ox.createLinearGradient(0, 0, 64, 0);
+      g.addColorStop(0, "rgb(" + a.map(Math.round) + ")"); g.addColorStop(1, "rgb(" + b.map(Math.round) + ")");
+      ox.fillStyle = g; ox.fillRect(0, y, 64, 1);
+    }
+    return o.toDataURL();
+  } catch (e) { return null; }
+}
+function placeClock() {
+  if (clockEl) { clockEl.remove(); clockEl = null; }
+  const c = CLOCKS[cur]; if (!c || !panelImage.naturalWidth) return;
+  const pad = 4, pw = 6, sx = c[2] / pw, ihU = panelImage.offsetHeight, cover = coverFor(c);
+  clockEl = document.createElement("div"); clockEl.id = "liveClock";
+  let bg;
+  if (cover) bg = ";background:url('" + cover + "') 0 0/100% 100% no-repeat";
+  else bg = ";background-image:url('" + panelImage.src + "');background-repeat:no-repeat;background-size:" + (1000 * sx) + "px " + ihU + "px;background-position:" + (-c[7] * sx) + "px " + (-(c[1] - pad)) + "px";
+  clockEl.style.cssText += "left:" + (c[0] - pad) + "px;top:" + (c[1] - pad) + "px;width:" + (c[2] + 2 * pad) + "px;height:" + (c[3] + 2 * pad) + "px;font-size:" + c[4] + "px;color:" + c[6] + bg;
+  clockEl.textContent = clockText(c[5]); panel.appendChild(clockEl);
+}
+setInterval(() => { if (clockEl && CLOCKS[cur]) clockEl.textContent = clockText(CLOCKS[cur][5]); }, 1000);
+panel.addEventListener("pointerdown", e => { if (!e.target.closest("button.z")) { armed = null; clearTimeout(autoT); hideTip(); } });
+function endTouch(e) { if (e.pointerType === "mouse" || !touching) return; touching = false; clearTimeout(hideT); hideT = setTimeout(hideTip, 3000); }   /* بعد از برداشتن انگشت ۳ ثانیه می‌ماند */
+document.addEventListener("pointerup", endTouch, true); document.addEventListener("pointercancel", endTouch, true);
+panel.addEventListener("contextmenu", e => e.preventDefault());
+
+/* ===== برش دستی (کراپ): فقط این بخش از عکس نشان داده می‌شود. مختصات روی عکس ۱۰۰۰ پیکسلی: [x, y, عرض, ارتفاع]
+   - برای همه صفحه‌ها: DEFAULT_CROP را پر کن، مثل { x: 88, y: 26, w: 820, h: 600 }
+   - فقط برای یک صفحه: داخل همان صفحه در PAGES بنویس  crop: [x, y, عرض, ارتفاع]
+   - آزمایش سریع بدون ویرایش کد: آدرس را با  ?crop=88,26,820,600  باز کن
+   - پیدا کردن مختصات: آدرس را با  ?cropset  باز کن (صفحه دیگر را با #اسم-صفحه بده، مثل ?cropset#main-menu)، دو گوشه صفحه نمایش را کلیک کن */
+const DEFAULT_CROP = null;
+const AUTO_CROP = false;   /* عکس‌ها از قبل برش خورده‌اند؛ true کنی کد خودش قاب مشکی را پیدا می‌کند */
+const PHONE_FIT = 1;   /* روی گوشی (حالت افقی) پنل تا جایی بزرگ می‌شود که کامل در صفحه جا شود و وسط قرار می‌گیرد. ۱ = بزرگ‌ترین اندازه‌ی ممکن؛ برای کوچک‌تر شدن عدد کمتر بگذارید، مثلاً ۰٫۹ */
+const MAX_SCALE = 0.8;   /* بیشترین بزرگ‌نمایی: ۱ = اندازه اصلی (۱۰۰۰ پیکسل عرض)؛ ۰٫۸ = ۸۰٪ آن؛ هر چه کمتر، کوچک‌تر */
+const CROPSET = /[?&]cropset\b/.test(location.search);
+const CROPQ = (() => { const m = location.search.match(/[?&]crop=([\d.]+),([\d.]+),([\d.]+),([\d.]+)/); return m ? { x: +m[1], y: +m[2], w: +m[3], h: +m[4] } : null; })();
+let crop = null;
+function detectCrop() {   /* قاب سیاه و حاشیه عکس را پیدا می‌کند تا فقط خود صفحه نمایش دیده شود (اگر مرورگر اجازه خواندن عکس ندهد، کراپ نمی‌شود) */
+  const W = panelImage.naturalWidth, H = panelImage.naturalHeight; if (!W || !H) return null;
+  try {
+    const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+    const g = cv.getContext("2d"); g.drawImage(panelImage, 0, 0);
+    const row = g.getImageData(0, H >> 1, W, 1).data, col = g.getImageData(W >> 1, 0, 1, H).data;
+    const L = (a, i) => 0.299 * a[i * 4] + 0.587 * a[i * 4 + 1] + 0.114 * a[i * 4 + 2];
+    const inner = (a, n, rev) => {   /* اولین نوار تیره (قاب) نزدیک لبه؛ بعد از آن شروع صفحه نمایش است */
+      const lim = Math.floor(n * 0.14); let run = 0;
+      for (let t = 0; t < lim; t++) {
+        const i = rev ? n - 1 - t : t;
+        if (L(a, i) < 45) run++;
+        else if (run >= 8) return t + 1;
+        else run = 0;
+      }
+      return 0;
+    };
+    const l = inner(row, W, false), r = inner(row, W, true), t = inner(col, H, false), b = inner(col, H, true), k = 1000 / W;
+    if (!l && !r && !t && !b) return null;
+    return { x: l * k, y: t * k, w: (W - l - r) * k, h: (H - t - b) * k };
+  } catch (er) { return null; }
+}
+function fitPanel() {
+  const land = matchMedia("(orientation: landscape)").matches, sc = screen, sMax = Math.max(sc.width || 0, sc.height || 0), sMin = Math.min(sc.width || 0, sc.height || 0);
+  const vw = Math.min(innerWidth, (land ? sMax : sMin) || innerWidth), vh = innerHeight, ih = panelImage.offsetHeight || 625;
+  const cr = crop || { x: 0, y: 0, w: 1000, h: ih };
+  const phone = land && matchMedia("(pointer: coarse)").matches;
+  const s = phone ? Math.min(vw / cr.w, vh / cr.h) * PHONE_FIT : Math.min(vw / cr.w, vh / cr.h, MAX_SCALE);   /* به بالا سمت چپ می‌چسبد */
+  panel.style.transform = "scale(" + s + ") translate(" + (-cr.x) + "px," + (-cr.y) + "px)";
+  panel.style.marginLeft = "0px";
+  const fw = document.getElementById("fitWrap"); fw.style.margin = phone ? "0 auto" : ""; fw.style.width = Math.floor(cr.w * s) + "px"; fw.style.height = Math.ceil(cr.h * s) + "px";
+}
+addEventListener("resize", () => { fitPanel(); hideTip(); });
+addEventListener("orientationchange", () => { fitPanel(); setTimeout(fitPanel, 300); });
+panelImage.addEventListener("load", () => {
+  const pc = PAGES[cur].crop;
+  crop = CROPSET ? null : pc ? { x: pc[0], y: pc[1], w: pc[2], h: pc[3] } : (CROPQ || (DEFAULT_CROP && { ...DEFAULT_CROP }) || (AUTO_CROP ? detectCrop() : null));
+  fitPanel(); placeClock();
+});
+if (CROPSET) {
+  const cb = document.getElementById("coordBox"); cb.style.display = "block"; panel.classList.add("pick");
+  cb.textContent = "گوشه بالا چپ صفحه نمایش را کلیک کن"; let c1 = null;
+  panel.addEventListener("click", e => {
+    const r = panel.getBoundingClientRect(), k = 1000 / r.width, a = [Math.round((e.clientX - r.left) * k), Math.round((e.clientY - r.top) * k)];
+    if (!c1) { c1 = a; crop = null; fitPanel(); cb.textContent = "گوشه اول: " + a.join(", ") + "\nحالا گوشه پایین راست را کلیک کن"; return; }
+    const x = Math.min(c1[0], a[0]), y = Math.min(c1[1], a[1]), w = Math.abs(a[0] - c1[0]), h = Math.abs(a[1] - c1[1]); c1 = null;
+    crop = { x, y, w, h }; fitPanel();
+    cb.textContent = "crop: [" + [x, y, w, h].join(", ") + "]\nیا آدرس: ?crop=" + [x, y, w, h].join(",") + "\n(دوباره کلیک کن تا از نو انتخاب کنی)";
+  });
+}
+
+if (SHOW_BUTTONS) {
+  panel.classList.add("debug-on"); if (PICK) panel.classList.add("pick");
+  const cb = document.getElementById("coordBox"); cb.style.display = "block"; cb.textContent = "x: -  y: -";
+  const xy = e => { const r = panel.getBoundingClientRect(), k = 1000 / r.width; return [Math.round((e.clientX - r.left) * k), Math.round((e.clientY - r.top) * k)]; };
+  panel.addEventListener("pointermove", e => { if (!p1) { const a = xy(e); cb.textContent = "x: " + a[0] + "   y: " + a[1]; } });
+  if (PICK) panel.addEventListener("click", e => {
+    const a = xy(e);
+    if (!p1) { p1 = a; cb.textContent = "گوشه اول: " + a[0] + ", " + a[1] + "\nحالا گوشه مقابل را کلیک کن"; return; }
+    const line = "[" + Math.min(p1[0], a[0]) + ", " + Math.min(p1[1], a[1]) + ", " + Math.abs(a[0] - p1[0]) + ", " + Math.abs(a[1] - p1[1]) + ', "name", "توضیح فارسی", "page"],';
+    p1 = null; cb.textContent = line + "\n(کپی شد؛ داخل buttons همین صفحه بچسبان)";
+    try { navigator.clipboard.writeText(line).catch(() => {}); } catch (er) {}
+  });
+}
+/* نشان دادن لمس: هر جای صفحه که لمس یا کلیک شود، یک حلقه‌ی کوچک همان‌جا دیده می‌شود (جاهایی که دکمه ندارند فقط همین را نشان می‌دهند و وارد عکس دیگر نمی‌شوند) */
+document.addEventListener("pointerdown", e => {
+  if (e.pointerType === "mouse" && e.button !== 0) return;
+  const d = document.createElement("div"); d.className = "tap"; d.style.left = e.clientX + "px"; d.style.top = e.clientY + "px";
+  document.body.appendChild(d); setTimeout(() => d.remove(), 700);
+}, true);
+
+render(PAGES[location.hash.slice(1)] ? location.hash.slice(1) : "layout");
+
+if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+
+(function(){
+  var ib=document.getElementById("installBtn"),dp=null;
+  var standalone=matchMedia("(display-mode: standalone)").matches||matchMedia("(display-mode: fullscreen)").matches||navigator.standalone;
+  if(standalone)return;
+  addEventListener("beforeinstallprompt",function(e){e.preventDefault();dp=e;ib.style.display="inline-block"});
+  addEventListener("appinstalled",function(){ib.style.display="none"});
+  ib.addEventListener("click",function(){if(dp){dp.prompt();dp=null;ib.style.display="none"}});
+  if(/iphone|ipad|ipod/i.test(navigator.userAgent)){var h=document.getElementById("iosHint");h.style.display="block";setTimeout(function(){h.style.display="none"},9000)}
+})();
+</script>
+</body>
+</html>

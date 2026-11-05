@@ -452,8 +452,8 @@ body.locked #topbar,body.locked #iosHint{display:none!important}
 <input id="gatePass" type="password" autocomplete="off" autofocus>
 <button type="submit">ورود</button><div class="err" id="gateErr"></div></form></div>
 <script>
-/* رمز عبور: هش SHA-256 از ("HMI::" + رمز). برای عوض کردن رمز، فایل make_hash.html را باز کنید و هش جدید را اینجا بگذارید */
-const PASS_HASH = "8515968bf0d987a8ae8783c12a8597c78756948ba8dc7df85c2e20e9231a1d4d";
+/* رمز عبور (مشترک بین هر سه پنل): هش SHA-256 از ("amotek-hmi|" + رمز با حروف کوچک). برای عوض کردن رمز، هش جدید را در هر سه پنل بگذارید (دستورش در README.md) */
+const PASS_HASH = "a36f6602d59ac7924a648d2adc4d016de939717085e995db062db6f6be1119b5";
 function sha256(str){
     function R(n,x){return (x>>>n)|(x<<(32-n));}
     const K=[],H=[];let c=0;
@@ -490,7 +490,7 @@ if (!NEEDS_GATE) {
 var _gf=document.getElementById("gateForm");if(_gf)_gf.addEventListener("submit",function(e){
     e.preventDefault();
     const v=document.getElementById("gatePass").value;
-    if(sha256("HMI::"+v)===PASS_HASH){
+    if(sha256("amotek-hmi|"+v.trim().toLowerCase())===PASS_HASH){
         document.getElementById("gate").remove();
         document.body.classList.remove("locked");
         window.dispatchEvent(new Event("resize"));

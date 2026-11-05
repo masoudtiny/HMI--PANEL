@@ -17,9 +17,9 @@
 /* ===== قفل رمز (Password gate) =====
    رمز داخل فایل نیست؛ فقط هش SHA-256 آن (HASH) ذخیره شده.
    برای عوض‌کردن رمز: در کنسول مرورگر این را اجرا کن و خروجی را جای HASH بگذار:
-   crypto.subtle.digest("SHA-256", new TextEncoder().encode("stacker-panel|رمزجدید با حروف کوچک")).then(b=>console.log([...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")))
+   crypto.subtle.digest("SHA-256", new TextEncoder().encode("amotek-hmi|رمزجدید با حروف کوچک")).then(b=>console.log([...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")))
 */
-var SP_SALT="stacker-panel|", SP_HASH="0d9afe01e4adc63bafddaa603ad5714ed02c4e6b160729e8c714609a55718e81";
+var SP_SALT="amotek-hmi|", SP_HASH="a36f6602d59ac7924a648d2adc4d016de939717085e995db062db6f6be1119b5";
 /* قفل فقط وقتی سایت از github.io باز شود فعال است؛ روی لپ‌تاپ (فایل محلی / localhost) رمز نمی‌خواهد */
 var SP_NEEDS_PW=/(^|\.)github\.io$/i.test(location.hostname)||/[?&]lock\b/.test(location.search);
 (function(){if(!SP_NEEDS_PW)return;try{if(!/[?&]lock\b/.test(location.search)&&sessionStorage.getItem("sp_ok2")===SP_HASH)return}catch(e){}document.documentElement.className+=" locked"})();

@@ -36,9 +36,11 @@ body{
 .logo-box{height:84px;border-radius:12px;display:flex;align-items:center;justify-content:center;padding:10px;margin-bottom:4px}
 .logo-box img{max-height:100%;max-width:82%;width:auto;height:auto;display:block}
 .logo-box.dark{background:#1b2128}.logo-box.white{background:#fff}
+.logo-box.lockup{gap:12px;direction:ltr}.logo-box.lockup img{max-width:58%}
+.logo-box .tag{font-weight:800;font-size:clamp(18px,4.4vw,26px);letter-spacing:3px;color:#eb374b;line-height:1}
 h1{margin:0;font-size:clamp(20px,4.6vw,28px);font-weight:800;text-align:center}
 .sub{margin:-12px 0 0;color:var(--muted);font-size:clamp(14px,3.4vw,16px);text-align:center}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:16px;width:min(720px,100%)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:16px;width:min(1000px,100%)}
 a.card{
   display:flex;flex-direction:column;gap:8px;text-decoration:none;color:inherit;
   background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 20px;
@@ -68,6 +70,12 @@ a.card:active{transform:scale(.98)}
     <span class="logo-box white"><img src="images/ccs-logo.png" alt="Cellulose Converting Solutions" width="200" height="101"></span>
     <span class="name">HMI Panel</span>
     <span class="desc">راهنمای تعاملی پنل HMI</span>
+    <span class="go">باز کردن ←</span>
+  </a>
+  <a class="card" href="bager-panel/">
+    <span class="logo-box dark lockup"><img src="images/amotek-logo.png" alt="AMOTEK" width="300" height="52"><span class="tag">BAGER</span></span>
+    <span class="name">Bager Panel</span>
+    <span class="desc">راهنمای تعاملی پنل HMI بگر Amotek</span>
     <span class="go">باز کردن ←</span>
   </a>
 </main>
