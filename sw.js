@@ -1,6 +1,6 @@
 /* Service worker منوی اصلی: فقط فایل‌های خود منو را کش می‌کند؛ پنل‌ها سرویس‌ورکر و کش جدا و مخصوص خودشان را دارند */
 const PREFIX = "hmi-menu-";   /* پیشوند مخصوص منو تا کش پنل‌ها پاک نشود */
-const CACHE = PREFIX + "v2";
+const CACHE = PREFIX + "v3";
 const SHELL = ["./", "index.html", "manifest.json", "images/menu-icon-192.png", "images/menu-icon-512.png", "images/amotek-logo.png", "images/ccs-logo.png"];
 const SCOPE = new URL("./", self.location).pathname;
 function mine(url) {   /* فقط خود منو و پوشه‌ی images همین ریشه؛ هر چیز داخل پوشه‌ی یک پنل به سرویس‌ورکر خود آن پنل واگذار می‌شود */
