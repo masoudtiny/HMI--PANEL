@@ -11,7 +11,6 @@ var BP_SALT="amotek-hmi|", BP_HASH="a36f6602d59ac7924a648d2adc4d016de939717085e9
 var BP_NEEDS_PW=/(^|\.)github\.io$/i.test(location.hostname)||/[?&]lock\b/.test(location.search);
 (function(){if(!BP_NEEDS_PW)return;try{if(!/[?&]lock\b/.test(location.search)&&sessionStorage.getItem("hmi_ok")===BP_HASH)return}catch(e){}document.documentElement.className+=" locked"})();
 </script>
-<link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -97,8 +96,7 @@ inp.addEventListener("keydown",function(e){if(e.key==="Enter")tryIt()});
 <div id="fitWrap" style="width:100%;margin:0;padding:0;overflow:hidden;line-height:0">
 <div class="panel" id="panel"><img id="panelImage" alt="HMI Packaging"></div>
 </div>
-<div id="topbar"><button id="installBtn" type="button">نصب برنامه</button><a id="menuBtn" href="../">منو</a></div>
-<div id="iosHint">برای نصب: دکمه Share را بزن و «Add to Home Screen» را انتخاب کن.</div>
+<div id="topbar"><a id="menuBtn" href="../">منو</a></div>
 <div id="coordBox"></div>
 <div id="msg"></div>
 <div id="hmiTooltip" class="hmi-tooltip"><span id="ttTitle" class="hmi-tooltip-title"></span><span id="ttText" class="hmi-tooltip-text"></span><span id="ttHint" class="hmi-tooltip-hint"></span></div>
@@ -1260,15 +1258,6 @@ if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
   addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 }
 
-(function(){
-  var ib=document.getElementById("installBtn"),dp=null;
-  var standalone=matchMedia("(display-mode: standalone)").matches||matchMedia("(display-mode: fullscreen)").matches||navigator.standalone;
-  if(standalone)return;
-  addEventListener("beforeinstallprompt",function(e){e.preventDefault();dp=e;ib.style.display="inline-block"});
-  addEventListener("appinstalled",function(){ib.style.display="none"});
-  ib.addEventListener("click",function(){if(dp){dp.prompt();dp=null;ib.style.display="none"}});
-  if(/iphone|ipad|ipod/i.test(navigator.userAgent)){var h=document.getElementById("iosHint");h.style.display="block";setTimeout(function(){h.style.display="none"},9000)}
-})();
 </script>
 <script>(function(){try{var sa=matchMedia("(display-mode: standalone)").matches||matchMedia("(display-mode: fullscreen)").matches||navigator.standalone;var m=document.getElementById("menuBtn");if(sa&&m)m.style.display="inline-block";if(sa&&screen.orientation&&screen.orientation.lock)screen.orientation.lock("landscape").catch(function(){})}catch(e){}})();</script>
 </body>

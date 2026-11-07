@@ -1,6 +1,6 @@
 /* نسخه‌ی جدید: هر بار که اپ باز می‌شود، فایل‌های تازه‌ی index.html و عکس‌ها را می‌گیرد */
 const PREFIX = "hmi-panel-";   /* پیشوند مخصوص همین برنامه تا کش برنامه‌های دیگر پاک نشود */
-const CACHE = PREFIX + "v4";
+const CACHE = PREFIX + "v5";
 const CORE = ["./", "index.html", "manifest.json", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", e => {

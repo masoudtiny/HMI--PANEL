@@ -4,14 +4,12 @@
 <meta charset="UTF-8">
 <meta name="google" content="notranslate">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#222222">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-title" content="HMI-PANEL">
 <title>HMI-PANEL</title>
-<script>window.__dp=null;addEventListener("beforeinstallprompt",function(e){e.preventDefault();window.__dp=e;window.dispatchEvent(new Event("dpready"))});</script>
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" media="print" onload="this.media='all'">
 <style>
 body{margin:0;padding:0;background:#222;overflow-x:hidden;font-family:Vazirmatn,Tahoma,Arial,sans-serif}
@@ -503,8 +501,7 @@ var _gf=document.getElementById("gateForm");if(_gf)_gf.addEventListener("submit"
     }
 });
 </script>
-<div id="topbar"><div id="installBtn" role="button" tabindex="0">نصب برنامه</div><a id="menuBtn" href="../">منو</a></div>
-<div id="iosHint">برای نصب: دکمه Share را بزن و «Add to Home Screen» را انتخاب کن.</div>
+<div id="topbar"><a id="menuBtn" href="../">منو</a></div>
 <div id="fitWrap" style="width:100%;overflow:hidden">
 <div class="panel">
 <img id="panelImage" src="images/Layout.png" alt="HMI Panel">
@@ -3862,23 +3859,6 @@ document.addEventListener("pointerdown", function (e) {
   var d = document.createElement("div"); d.className = "tapRipple"; d.style.left = e.clientX + "px"; d.style.top = e.clientY + "px";
   document.body.appendChild(d); setTimeout(function () { d.remove(); }, 700);
 }, true);
-</script>
-<script>
-(function(){
-  var ib=document.getElementById("installBtn"),h=document.getElementById("iosHint"),ht=null;
-  if(matchMedia("(display-mode: standalone)").matches||matchMedia("(display-mode: fullscreen)").matches||navigator.standalone)return;
-  function show(){ib.style.display="block"}
-  function msg(t){h.textContent=t;h.style.display="block";clearTimeout(ht);ht=setTimeout(function(){h.style.display="none"},9000)}
-  if(window.__dp)show();
-  addEventListener("dpready",show);
-  addEventListener("appinstalled",function(){ib.style.display="none"});
-  setTimeout(show,2500);   /* اگر مرورگر پیام نصب نفرستاد، دکمه باز هم دیده می‌شود و راهنما می‌دهد */
-  ib.addEventListener("click",function(){
-    if(window.__dp){window.__dp.prompt();window.__dp=null;ib.style.display="none";return}
-    msg(/iphone|ipad|ipod/i.test(navigator.userAgent)?"برای نصب: دکمه Share را بزن و «Add to Home Screen» را انتخاب کن.":"از منوی ⋮ بالای مرورگر Chrome گزینه «Install app» یا «Add to Home screen» را بزن. اگر این گزینه‌ها نیست، برنامه قبلاً نصب شده.");
-  });
-  if(/iphone|ipad|ipod/i.test(navigator.userAgent))msg("برای نصب: دکمه Share را بزن و «Add to Home Screen» را انتخاب کن.");
-})();
 </script>
 <script>(function(){try{var sa=matchMedia("(display-mode: standalone)").matches||matchMedia("(display-mode: fullscreen)").matches||navigator.standalone;var m=document.getElementById("menuBtn");if(sa&&m)m.style.display="inline-block";if(sa&&screen.orientation&&screen.orientation.lock)screen.orientation.lock("landscape").catch(function(){})}catch(e){}})();</script>
 </body>
