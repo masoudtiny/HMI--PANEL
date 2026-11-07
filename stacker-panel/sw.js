@@ -1,6 +1,6 @@
 /* Service worker: لازم برای نصب روی گوشی + کار کردن بدون اینترنت */
 const PREFIX = "hmi-stacker-";   /* پیشوند مخصوص همین برنامه تا کش برنامه‌های دیگر پاک نشود */
-const CACHE = PREFIX + "v5";
+const CACHE = PREFIX + "v6";
 const SHELL = ["./", "index.html", "manifest.json", "images/icon-192.png", "images/icon-512.png", "images/logo.png"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));

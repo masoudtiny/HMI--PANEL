@@ -86,7 +86,7 @@ if(window.crypto&&crypto.subtle&&window.TextEncoder){return crypto.subtle.digest
 return Promise.resolve(sha256js(bytes))}
 var inp=document.getElementById("gatePw"),err=document.getElementById("gateErr"),busy=false;
 function tryIt(){if(busy)return;busy=true;err.textContent="";
-hash(inp.value.trim().toLowerCase()).then(function(h){
+hash(inp.value.trim()).then(function(h){
 if(h===BP_HASH){try{sessionStorage.setItem("hmi_ok",h)}catch(e){}document.documentElement.classList.remove("locked");inp.value="";window.dispatchEvent(new Event("resize"));busy=false}
 else{setTimeout(function(){err.textContent="رمز اشتباه است";inp.select();busy=false},800)}})}
 document.getElementById("gateBtn").addEventListener("click",tryIt);

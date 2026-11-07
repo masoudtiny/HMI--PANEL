@@ -21,7 +21,7 @@ After changing any menu file or icon, raise the version in `sw.js` (`PREFIX + "v
 
 ## Password
 
-The menu is open; each panel asks for a password when opened on `github.io`. All three panels share one password: `hmi2026` (SHA-256 of `amotek-hmi|` + lowercase password; only the hash is stored in each `index.html`).
+The menu is open; each panel asks for a password when opened on `github.io`. All three panels share one password: `hmi2026` (SHA-256 of `amotek-hmi|` + password, case-sensitive; only the hash is stored in each `index.html`).
 
 Current hash:
 
