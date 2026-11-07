@@ -1,6 +1,6 @@
 /* Service worker: لازم برای نصب روی گوشی + کار کردن بدون اینترنت */
 const PREFIX = "hmi-bager-";   /* پیشوند مخصوص همین برنامه تا کش برنامه‌های دیگر پاک نشود */
-const CACHE = PREFIX + "v3";
+const CACHE = PREFIX + "v4";
 const SHELL = ["./", "index.html", "manifest.json", "icon-192.png", "icon-512.png", "logo.png"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));

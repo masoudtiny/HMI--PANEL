@@ -22,7 +22,7 @@
 var SP_SALT="amotek-hmi|", SP_HASH="a36f6602d59ac7924a648d2adc4d016de939717085e995db062db6f6be1119b5";
 /* قفل فقط وقتی سایت از github.io باز شود فعال است؛ روی لپ‌تاپ (فایل محلی / localhost) رمز نمی‌خواهد */
 var SP_NEEDS_PW=/(^|\.)github\.io$/i.test(location.hostname)||/[?&]lock\b/.test(location.search);
-(function(){if(!SP_NEEDS_PW)return;try{if(!/[?&]lock\b/.test(location.search)&&sessionStorage.getItem("sp_ok2")===SP_HASH)return}catch(e){}document.documentElement.className+=" locked"})();
+(function(){if(!SP_NEEDS_PW)return;try{if(!/[?&]lock\b/.test(location.search)&&sessionStorage.getItem("hmi_ok")===SP_HASH)return}catch(e){}document.documentElement.className+=" locked"})();
 </script>
 <style>
 html.locked body>*:not(#gate){display:none!important}
@@ -92,7 +92,7 @@ return Promise.resolve(sha256js(bytes))}
 var inp=document.getElementById("gatePw"),err=document.getElementById("gateErr"),busy=false;
 function tryIt(){if(busy)return;busy=true;err.textContent="";
 hash(inp.value.trim().toLowerCase()).then(function(h){
-if(h===SP_HASH){try{sessionStorage.setItem("sp_ok2",h)}catch(e){}document.documentElement.classList.remove("locked");inp.value="";window.dispatchEvent(new Event("resize"));busy=false}
+if(h===SP_HASH){try{sessionStorage.setItem("hmi_ok",h)}catch(e){}document.documentElement.classList.remove("locked");inp.value="";window.dispatchEvent(new Event("resize"));busy=false}
 else{setTimeout(function(){err.textContent="رمز اشتباه است";inp.select();busy=false},800)}})}
 document.getElementById("gateBtn").addEventListener("click",tryIt);
 inp.addEventListener("keydown",function(e){if(e.key==="Enter")tryIt()});

@@ -5,7 +5,7 @@ Interactive help pages for HMI panels. Open the root page for the menu.
 | Path | Project |
 |---|---|
 | `/` | Menu |
-| `/stacker-panel/` | Stacker Panel (Amotek ST8B-2S) |
+| `/stacker-panel/` | Stacker Panel (Amotek) |
 | `/hmi-panel/` | HMI Panel |
 | `/bager-panel/` | Bager Panel (Amotek) |
 

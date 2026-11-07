@@ -484,7 +484,8 @@ function sha256(str){
 /* رمز فقط وقتی لازم است که صفحه از آدرس‌های این لیست (مثلاً گیت‌هاب) باز شود. روی سیستم‌های شرکت (فایل محلی یا سرور داخلی) رمز خواسته نمی‌شود. اگر دامنه اختصاصی دارید، اینجا اضافه کنید. */
 const GATE_HOSTS = ["github.io"];
 const NEEDS_GATE = GATE_HOSTS.some(h => location.hostname === h || location.hostname.endsWith("." + h));
-if (!NEEDS_GATE) {
+var _ok=false;try{_ok=sessionStorage.getItem("hmi_ok")===PASS_HASH}catch(e){}
+if (!NEEDS_GATE || _ok) {
     document.getElementById("gate").remove();
     document.body.classList.remove("locked");
 }
@@ -492,6 +493,7 @@ var _gf=document.getElementById("gateForm");if(_gf)_gf.addEventListener("submit"
     e.preventDefault();
     const v=document.getElementById("gatePass").value;
     if(sha256("amotek-hmi|"+v.trim().toLowerCase())===PASS_HASH){
+        try{sessionStorage.setItem("hmi_ok",PASS_HASH)}catch(e){}
         document.getElementById("gate").remove();
         document.body.classList.remove("locked");
         window.dispatchEvent(new Event("resize"));
